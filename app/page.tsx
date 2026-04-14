@@ -22,6 +22,8 @@ export default function DarkroomCanvas() {
   const [loading, setLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [images, setImages] = useState<{ url: string }[]>([]);
+  
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let rafId: number;
@@ -107,6 +109,16 @@ export default function DarkroomCanvas() {
     setTimeout(() => { setLoading(false); setCurrentCategory(label); }, 2300);
   };
 
+  const handleCopy = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault(); 
+    navigator.clipboard.writeText("breuermalte@icloud.com"); 
+    setCopied(true);
+    
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  };
+
   return (
     <main className="h-screen w-screen bg-black overflow-hidden relative">
       <AnimatePresence>
@@ -122,8 +134,7 @@ export default function DarkroomCanvas() {
               <button
                 key={item.id}
                 onClick={() => selectCategory(item.label)}
-                // Schrift 15% kleiner: text-3xl & md:text-[6.75rem]
-                className="text-3xl md:text-[6.75rem] font-black text-white tracking-tighter hover:text-red-600 transition-colors duration-500 uppercase select-none"
+                className="text-2xl md:text-[5.5rem] font-black text-white tracking-tighter hover:text-red-600 transition-colors duration-500 uppercase select-none"
               >
                 {item.label}
               </button>
@@ -147,26 +158,26 @@ export default function DarkroomCanvas() {
             ← Zurück
           </button>
 
-          {/* Schrift 15% kleiner: text-4xl & md:text-[6.75rem] */}
           <h1 className="text-4xl md:text-[6.75rem] font-black mb-16 tracking-tighter leading-none text-white uppercase italic text-center">
             SAY HELLO
           </h1>
 
           <div className="flex flex-col items-center gap-10">
             <a 
-              href="breuermalte@icloud.com" 
-              // Schrift 15% kleiner: text-[15px] & md:text-[25.5px]
-              className="group relative text-[15px] md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase"
+              href="mailto:breuermalte@icloud.com" 
+              onClick={handleCopy}
+              className="group relative text-[15px] md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase cursor-none"
             >
-              breuermalte@icloud.com
-              <span className="absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full transition-all duration-500"></span>
+              {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
+              
+              <span className={`absolute -bottom-3 left-0 h-[2px] bg-red-600 transition-all duration-500 ${copied ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
             </a>
 
             <a 
               href="https://www.instagram.com/mhlensvisuals/" 
               target="_blank" 
               rel="noreferrer"
-              className="group relative text-[15px] md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase"
+              className="group relative text-[15px] md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase cursor-none"
             >
               @instagram
               <span className="absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full transition-all duration-500"></span>
@@ -184,7 +195,6 @@ export default function DarkroomCanvas() {
             ← Zurück
           </button>
 
-          {/* Schrift 15% kleiner: text-4xl & md:text-[6.75rem] */}
           <h1 className="text-4xl md:text-[6.75rem] font-black mb-10 md:mb-16 tracking-tighter leading-none text-white uppercase italic">
             {currentCategory}
           </h1>
