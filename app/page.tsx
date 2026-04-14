@@ -9,7 +9,8 @@ const MENU = [
   { id: "events", label: "EVENTS" },
   { id: "landschaft", label: "LANDSCHAFT" },
   { id: "street", label: "STREET" },
-  { id: "personen", label: "PERSONEN" }
+  { id: "personen", label: "PERSONEN" },
+  { id: "kontakt", label: "KONTAKT" }
 ];
 
 let globalCanvasBuffer: ImageData | null = null;
@@ -95,9 +96,14 @@ export default function DarkroomCanvas() {
         bufferHeight = canvasRef.current.height;
       }
     }
+    
     setLoading(true);
-    const { data, error } = await supabase.from('images').select('url').eq('category', label);
-    if (!error) setImages(data || []);
+
+    if (label !== "KONTAKT") {
+      const { data, error } = await supabase.from('images').select('url').eq('category', label);
+      if (!error) setImages(data || []);
+    }
+    
     setTimeout(() => { setLoading(false); setCurrentCategory(label); }, 2300);
   };
 
@@ -116,7 +122,8 @@ export default function DarkroomCanvas() {
               <button
                 key={item.id}
                 onClick={() => selectCategory(item.label)}
-                className="text-4xl md:text-9xl font-black text-white tracking-tighter hover:text-red-600 transition-colors duration-500 uppercase select-none"
+                // Schrift 15% kleiner: text-3xl & md:text-[6.75rem]
+                className="text-3xl md:text-[6.75rem] font-black text-white tracking-tighter hover:text-red-600 transition-colors duration-500 uppercase select-none"
               >
                 {item.label}
               </button>
@@ -125,21 +132,60 @@ export default function DarkroomCanvas() {
           <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
           <div className="pointer-events-none fixed inset-0 z-30 opacity-20" style={{ background: `radial-gradient(circle 150px at var(--x) var(--y), rgba(220, 38, 38, 0.4) 0%, transparent 100%)` }} />
           <div className="absolute bottom-10 w-full text-center z-40 px-6">
-            <motion.p animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity }} className="font-mono text-[9px] md:text-[10px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase">
+            <motion.p animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity }} className="font-mono text-[7.5px] md:text-[8.5px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase">
               Wische, um das Archiv zu belichten
             </motion.p>
           </div>
         </div>
-      ) : (
-        <div className="p-4 md:p-16 overflow-y-auto h-full hide-scrollbar relative bg-black">
+      ) : currentCategory === "KONTAKT" ? (
+        
+        <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black">
           <button 
             onClick={() => setCurrentCategory(null)} 
-            className="text-red-600 font-mono text-[9px] md:text-[10px] mb-8 md:mb-12 tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm relative z-50"
+            className="absolute top-10 left-10 text-red-600 font-mono text-[7.5px] md:text-[8.5px] tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm z-50"
           >
             ← Zurück
           </button>
 
-          <h1 className="text-5xl md:text-[8rem] font-black mb-10 md:mb-16 tracking-tighter leading-none text-white uppercase italic">
+          {/* Schrift 15% kleiner: text-4xl & md:text-[6.75rem] */}
+          <h1 className="text-4xl md:text-[6.75rem] font-black mb-16 tracking-tighter leading-none text-white uppercase italic text-center">
+            SAY HELLO
+          </h1>
+
+          <div className="flex flex-col items-center gap-10">
+            <a 
+              href="breuermalte@icloud.com" 
+              // Schrift 15% kleiner: text-[15px] & md:text-[25.5px]
+              className="group relative text-[15px] md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase"
+            >
+              breuermalte@icloud.com
+              <span className="absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full transition-all duration-500"></span>
+            </a>
+
+            <a 
+              href="https://www.instagram.com/mhlensvisuals/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="group relative text-[15px] md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase"
+            >
+              @instagram
+              <span className="absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full transition-all duration-500"></span>
+            </a>
+          </div>
+        </div>
+
+      ) : (
+
+        <div className="p-4 md:p-16 overflow-y-auto h-full hide-scrollbar relative bg-black">
+          <button 
+            onClick={() => setCurrentCategory(null)} 
+            className="text-red-600 font-mono text-[7.5px] md:text-[8.5px] mb-8 md:mb-12 tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm relative z-50"
+          >
+            ← Zurück
+          </button>
+
+          {/* Schrift 15% kleiner: text-4xl & md:text-[6.75rem] */}
+          <h1 className="text-4xl md:text-[6.75rem] font-black mb-10 md:mb-16 tracking-tighter leading-none text-white uppercase italic">
             {currentCategory}
           </h1>
 
