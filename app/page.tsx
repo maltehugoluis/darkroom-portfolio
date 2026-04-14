@@ -142,7 +142,7 @@ export default function DarkroomCanvas() {
               <button
                 key={item.id}
                 onClick={() => selectCategory(item.label)}
-                className="text-6xl md:text-[5.5rem] font-black text-white tracking-tighter hover:text-red-600 transition-colors duration-500 uppercase select-none"
+                className="text-6xl md:text-[5.5rem] font-black text-white tracking-tighter hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500 uppercase select-none"
               >
                 {item.label}
               </button>
@@ -166,7 +166,7 @@ export default function DarkroomCanvas() {
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black">
           <button 
             onClick={() => setCurrentCategory(null)} 
-            className="absolute top-10 left-10 text-red-600 font-mono text-[12px] md:text-[10px] tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm z-50"
+            className="absolute top-10 left-10 text-red-600 font-mono text-[12px] md:text-[10px] tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white hover:shadow-[0_0_20px_rgba(220,38,38,0.6)] transition-all rounded-sm z-50"
           >
             ← Zurück
           </button>
@@ -179,21 +179,21 @@ export default function DarkroomCanvas() {
             <a 
               href="mailto:breuermalte@icloud.com" 
               onClick={handleCopy}
-              className="group relative text-2xl md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase cursor-none"
+              className="group relative text-2xl md:text-[25.5px] font-mono text-zinc-500 hover:text-white hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.2em] uppercase cursor-none"
             >
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
               
-              <span className={`absolute -bottom-3 left-0 h-[2px] bg-red-600 transition-all duration-500 ${copied ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+              <span className={`absolute -bottom-3 left-0 h-[2px] bg-red-600 transition-all duration-500 ${copied ? 'w-full shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'w-0 group-hover:w-full group-hover:shadow-[0_0_15px_rgba(220,38,38,0.8)]'}`}></span>
             </a>
 
             <a 
               href="https://www.instagram.com/mhlensvisuals/" 
               target="_blank" 
               rel="noreferrer"
-              className="group relative text-2xl md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase cursor-none"
+              className="group relative text-2xl md:text-[25.5px] font-mono text-zinc-500 hover:text-white hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.2em] uppercase cursor-none"
             >
               @instagram
-              <span className="absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full transition-all duration-500"></span>
+              <span className="absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full group-hover:shadow-[0_0_15px_rgba(220,38,38,0.8)] transition-all duration-500"></span>
             </a>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function DarkroomCanvas() {
         <div className="p-4 md:p-16 overflow-y-auto h-full hide-scrollbar relative bg-black">
           <button 
             onClick={() => setCurrentCategory(null)} 
-            className="text-red-600 font-mono text-[12px] md:text-[10px] mb-8 md:mb-12 tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm relative z-50"
+            className="text-red-600 font-mono text-[12px] md:text-[10px] mb-8 md:mb-12 tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white hover:shadow-[0_0_20px_rgba(220,38,38,0.6)] transition-all rounded-sm relative z-50"
           >
             ← Zurück
           </button>
