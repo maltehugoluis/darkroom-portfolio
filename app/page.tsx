@@ -24,8 +24,11 @@ export default function DarkroomCanvas() {
   const [images, setImages] = useState<{ url: string }[]>([]);
   
   const [copied, setCopied] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+    
     let rafId: number;
     
     const updatePosition = (x: number, y: number) => {
@@ -36,12 +39,13 @@ export default function DarkroomCanvas() {
         rafId = requestAnimationFrame(() => {
           const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
           if (ctx) {
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, 100); 
+            const radius = window.innerWidth < 768 ? 45 : 100;
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius); 
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
             gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
             ctx.fillStyle = gradient;
             ctx.beginPath();
-            ctx.arc(x, y, 100, 0, Math.PI * 2);
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
           }
         });
@@ -56,9 +60,13 @@ export default function DarkroomCanvas() {
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false }); 
 
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(rafId);
     };
   }, [currentCategory]);
@@ -134,16 +142,21 @@ export default function DarkroomCanvas() {
               <button
                 key={item.id}
                 onClick={() => selectCategory(item.label)}
-                className="text-2xl md:text-[5.5rem] font-black text-white tracking-tighter hover:text-red-600 transition-colors duration-500 uppercase select-none"
+                className="text-4xl md:text-[5.5rem] font-black text-white tracking-tighter hover:text-red-600 transition-colors duration-500 uppercase select-none"
               >
                 {item.label}
               </button>
             ))}
           </div>
           <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
-          <div className="pointer-events-none fixed inset-0 z-30 opacity-20" style={{ background: `radial-gradient(circle 150px at var(--x) var(--y), rgba(220, 38, 38, 0.4) 0%, transparent 100%)` }} />
+          <div 
+            className="pointer-events-none fixed inset-0 z-30 opacity-20" 
+            style={{ 
+              background: `radial-gradient(circle ${isMobile ? '60px' : '150px'} at var(--x) var(--y), rgba(220, 38, 38, 0.4) 0%, transparent 100%)` 
+            }} 
+          />
           <div className="absolute bottom-10 w-full text-center z-40 px-6">
-            <motion.p animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity }} className="font-mono text-[7.5px] md:text-[8.5px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase">
+            <motion.p animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity }} className="font-mono text-[10px] md:text-[10px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase">
               Wische, um das Archiv zu belichten
             </motion.p>
           </div>
@@ -153,12 +166,12 @@ export default function DarkroomCanvas() {
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black">
           <button 
             onClick={() => setCurrentCategory(null)} 
-            className="absolute top-10 left-10 text-red-600 font-mono text-[7.5px] md:text-[8.5px] tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm z-50"
+            className="absolute top-10 left-10 text-red-600 font-mono text-[10px] md:text-[10px] tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm z-50"
           >
             ← Zurück
           </button>
 
-          <h1 className="text-4xl md:text-[6.75rem] font-black mb-16 tracking-tighter leading-none text-white uppercase italic text-center">
+          <h1 className="text-5xl md:text-[6.75rem] font-black mb-16 tracking-tighter leading-none text-white uppercase italic text-center">
             SAY HELLO
           </h1>
 
@@ -166,7 +179,7 @@ export default function DarkroomCanvas() {
             <a 
               href="mailto:breuermalte@icloud.com" 
               onClick={handleCopy}
-              className="group relative text-[15px] md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase cursor-none"
+              className="group relative text-lg md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase cursor-none"
             >
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
               
@@ -177,7 +190,7 @@ export default function DarkroomCanvas() {
               href="https://www.instagram.com/mhlensvisuals/" 
               target="_blank" 
               rel="noreferrer"
-              className="group relative text-[15px] md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase cursor-none"
+              className="group relative text-lg md:text-[25.5px] font-mono text-zinc-500 hover:text-white transition-colors tracking-[0.2em] uppercase cursor-none"
             >
               @instagram
               <span className="absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full transition-all duration-500"></span>
@@ -190,12 +203,12 @@ export default function DarkroomCanvas() {
         <div className="p-4 md:p-16 overflow-y-auto h-full hide-scrollbar relative bg-black">
           <button 
             onClick={() => setCurrentCategory(null)} 
-            className="text-red-600 font-mono text-[7.5px] md:text-[8.5px] mb-8 md:mb-12 tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm relative z-50"
+            className="text-red-600 font-mono text-[10px] md:text-[10px] mb-8 md:mb-12 tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm relative z-50"
           >
             ← Zurück
           </button>
 
-          <h1 className="text-4xl md:text-[6.75rem] font-black mb-10 md:mb-16 tracking-tighter leading-none text-white uppercase italic">
+          <h1 className="text-5xl md:text-[6.75rem] font-black mb-10 md:mb-16 tracking-tighter leading-none text-white uppercase italic">
             {currentCategory}
           </h1>
 
