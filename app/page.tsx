@@ -22,7 +22,6 @@ export default function DarkroomCanvas() {
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [images, setImages] = useState<{ url: string }[]>([]);
 
-  // 1. Kombiniertes Mouse- & Touch-Tracking
   useEffect(() => {
     let rafId: number;
     
@@ -34,7 +33,7 @@ export default function DarkroomCanvas() {
         rafId = requestAnimationFrame(() => {
           const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
           if (ctx) {
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, 100); // Radius leicht verkleinert für Mobile
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, 100); 
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
             gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
             ctx.fillStyle = gradient;
@@ -52,7 +51,7 @@ export default function DarkroomCanvas() {
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false }); // false, um Scrollen auf Canvas zu stoppen
+    window.addEventListener('touchmove', handleTouchMove, { passive: false }); 
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
@@ -61,23 +60,27 @@ export default function DarkroomCanvas() {
     };
   }, [currentCategory]);
 
-  // 2. Canvas Backup & Restore (unverändert)
   useEffect(() => {
     if (currentCategory) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    
     const init = () => {
+      if (!ctx) return; 
+
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       if (globalCanvasBuffer && bufferWidth === canvas.width && bufferHeight === canvas.height) {
         ctx.putImageData(globalCanvasBuffer, 0, 0);
       } else {
-        ctx.fillStyle = 'black'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'black'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         globalCanvasBuffer = null;
       }
       ctx.globalCompositeOperation = 'destination-out';
     };
+    
     init();
     window.addEventListener('resize', init);
     return () => window.removeEventListener('resize', init);
