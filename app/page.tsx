@@ -26,6 +26,13 @@ export default function DarkroomCanvas() {
   const [copied, setCopied] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Sound-Effekt Setup
+  const playClickSound = () => {
+    const audio = new Audio('/click.mp3'); // Pfad zum public Ordner
+    audio.volume = 0.4; // Lautstärke etwas dezenter (0.0 bis 1.0)
+    audio.play().catch(err => console.log("Audio play blocked:", err));
+  };
+
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
     
@@ -98,6 +105,9 @@ export default function DarkroomCanvas() {
   }, [currentCategory]);
 
   const selectCategory = async (label: string) => {
+    // Sound abspielen bei Klick
+    playClickSound();
+
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
       if (ctx) {
@@ -165,13 +175,16 @@ export default function DarkroomCanvas() {
         
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black">
           <button 
-            onClick={() => setCurrentCategory(null)} 
+            onClick={() => {
+              playClickSound(); // Auch beim Zurück-Button ein dezentes Feedback
+              setCurrentCategory(null);
+            }} 
             className="absolute top-10 left-10 text-red-600 font-mono text-[12px] md:text-[10px] tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white hover:shadow-[0_0_20px_rgba(220,38,38,0.6)] transition-all rounded-sm z-50"
           >
             ← Zurück
           </button>
 
-          <h1 className="text-7xl md:text-[6.75rem] font-black mb-16 tracking-tighter leading-none text-white uppercase italic text-center">
+          <h1 className="text-4xl md:text-[6.75rem] font-black mb-16 tracking-tighter leading-none text-white uppercase italic text-center hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
             SAY HELLO
           </h1>
 
@@ -179,7 +192,7 @@ export default function DarkroomCanvas() {
             <a 
               href="mailto:breuermalte@icloud.com" 
               onClick={handleCopy}
-              className="group relative text-2xl md:text-[25.5px] font-mono text-zinc-500 hover:text-white hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.2em] uppercase cursor-none"
+              className="group relative text-xl md:text-[25.5px] font-mono text-zinc-500 hover:text-white hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.2em] uppercase cursor-none"
             >
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
               
@@ -190,7 +203,7 @@ export default function DarkroomCanvas() {
               href="https://www.instagram.com/mhlensvisuals/" 
               target="_blank" 
               rel="noreferrer"
-              className="group relative text-2xl md:text-[25.5px] font-mono text-zinc-500 hover:text-white hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.2em] uppercase cursor-none"
+              className="group relative text-xl md:text-[25.5px] font-mono text-zinc-500 hover:text-white hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.2em] uppercase cursor-none"
             >
               @instagram
               <span className="absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full group-hover:shadow-[0_0_15px_rgba(220,38,38,0.8)] transition-all duration-500"></span>
@@ -202,13 +215,16 @@ export default function DarkroomCanvas() {
 
         <div className="p-4 md:p-16 overflow-y-auto h-full hide-scrollbar relative bg-black">
           <button 
-            onClick={() => setCurrentCategory(null)} 
+            onClick={() => {
+              playClickSound();
+              setCurrentCategory(null);
+            }} 
             className="text-red-600 font-mono text-[12px] md:text-[10px] mb-8 md:mb-12 tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white hover:shadow-[0_0_20px_rgba(220,38,38,0.6)] transition-all rounded-sm relative z-50"
           >
             ← Zurück
           </button>
 
-          <h1 className="text-7xl md:text-[6.75rem] font-black mb-10 md:mb-16 tracking-tighter leading-none text-white uppercase italic">
+          <h1 className="text-7xl md:text-[6.75rem] font-black mb-10 md:mb-16 tracking-tighter leading-none text-white uppercase italic hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
             {currentCategory}
           </h1>
 
