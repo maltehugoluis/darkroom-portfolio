@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* 1. GLOBALER CURSOR-KILL */
+/* Deaktiviert den Standard-Cursor im gesamten Projekt */
+html, body, * {
+  cursor: none !important;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Verhindert, dass interaktive Elemente den Cursor zurückholen */
+a, button, input, select, textarea, [role="button"] {
+  cursor: none !important;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* 2. BODY-SETUP */
+body {
+  background-color: #000000;
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Fixiert den Screen auf der Mainpage */
+  user-select: none; /* Verhindert Textmarkierung beim "Malen" */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Verhindert das "Pull-to-refresh" auf mobilen Browsern */
+  overscroll-behavior-y: contain;
+}
+
+/* 3. DER PERFORMANTE CUSTOM-CURSOR */
+.custom-cursor {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444; /* Labor-Rot */
+  border-radius: 50%;
+  pointer-events: none; /* Klicks gehen durch den Punkt hindurch */
+  z-index: 9999;
+  
+  /* Positionierung via CSS-Variablen (High-Speed) */
+  left: var(--x, -100px);
+  top: var(--y, -100px);
+  
+  transform: translate(-50%, -50%);
+  
+  /* Optischer Glow */
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.9), 
+              0 0 30px rgba(239, 68, 68, 0.4);
+  
+  /* Hardware-Beschleunigung */
+  will-change: left, top;
+  transition: width 0.2s ease, height 0.2s ease, opacity 0.3s ease;
+}
+
+/* 4. MOBILE OPTIMIERUNGEN (Media Queries) */
+@media (max-width: 768px) {
+  .custom-cursor {
+    /* Größerer Punkt für Touch, damit man ihn unter dem Finger sieht */
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+  }
+  
+  /* Deaktiviert Standard-Gesten auf der Hauptseite */
+  .touch-none {
+    touch-action: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* 5. UTILITIES & MASONRY FIXES */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Verhindert Fokus-Outlines bei Klicks */
+*:focus {
+  outline: none !important;
+}
+
+/* Masonry Fallback: Verhindert, dass Bilder in Columns zerrissen werden */
+.break-inside-avoid {
+  break-inside: avoid;
+  display: inline-block;
+  width: 100%;
+}
+
+/* Sanfte Animation für den Info-Text */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s infinite ease-in-out;
 }

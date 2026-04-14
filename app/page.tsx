@@ -1,65 +1,154 @@
-import Image from "next/image";
+"use client";
+import { useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
+import ChemistryTimer from '@/components/ChemistryTimer';
+import DevelopingImage from '@/components/DevelopingImage';
 
-export default function Home() {
+const MENU = [
+  { id: "events", label: "EVENTS" },
+  { id: "landschaft", label: "LANDSCHAFT" },
+  { id: "street", label: "STREET" },
+  { id: "personen", label: "PERSONEN" }
+];
+
+let globalCanvasBuffer: ImageData | null = null;
+let bufferWidth = 0;
+let bufferHeight = 0;
+
+export default function DarkroomCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState<string | null>(null);
+  const [images, setImages] = useState<{ url: string }[]>([]);
+
+  // 1. Kombiniertes Mouse- & Touch-Tracking
+  useEffect(() => {
+    let rafId: number;
+    
+    const updatePosition = (x: number, y: number) => {
+      document.documentElement.style.setProperty('--x', `${x}px`);
+      document.documentElement.style.setProperty('--y', `${y}px`);
+
+      if (!currentCategory && canvasRef.current) {
+        rafId = requestAnimationFrame(() => {
+          const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
+          if (ctx) {
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, 100); // Radius leicht verkleinert für Mobile
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, 100, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => updatePosition(e.clientX, e.clientY);
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) updatePosition(e.touches[0].clientX, e.touches[0].clientY);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false }); // false, um Scrollen auf Canvas zu stoppen
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, [currentCategory]);
+
+  // 2. Canvas Backup & Restore (unverändert)
+  useEffect(() => {
+    if (currentCategory) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const init = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      if (globalCanvasBuffer && bufferWidth === canvas.width && bufferHeight === canvas.height) {
+        ctx.putImageData(globalCanvasBuffer, 0, 0);
+      } else {
+        ctx.fillStyle = 'black'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        globalCanvasBuffer = null;
+      }
+      ctx.globalCompositeOperation = 'destination-out';
+    };
+    init();
+    window.addEventListener('resize', init);
+    return () => window.removeEventListener('resize', init);
+  }, [currentCategory]);
+
+  const selectCategory = async (label: string) => {
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+      if (ctx) {
+        globalCanvasBuffer = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+        bufferWidth = canvasRef.current.width;
+        bufferHeight = canvasRef.current.height;
+      }
+    }
+    setLoading(true);
+    const { data, error } = await supabase.from('images').select('url').eq('category', label);
+    if (!error) setImages(data || []);
+    setTimeout(() => { setLoading(false); setCurrentCategory(label); }, 2300);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="h-screen w-screen bg-black overflow-hidden relative">
+      <AnimatePresence>
+        {loading && <ChemistryTimer onComplete={() => {}} />}
+      </AnimatePresence>
+
+      <div className="custom-cursor" />
+
+      {!currentCategory ? (
+        <div className="relative h-full w-full bg-black touch-none">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 md:gap-12 p-4">
+            {MENU.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => selectCategory(item.label)}
+                className="text-4xl md:text-9xl font-black text-white tracking-tighter hover:text-red-600 transition-colors duration-500 uppercase select-none"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
+          <div className="pointer-events-none fixed inset-0 z-30 opacity-20" style={{ background: `radial-gradient(circle 150px at var(--x) var(--y), rgba(220, 38, 38, 0.4) 0%, transparent 100%)` }} />
+          <div className="absolute bottom-10 w-full text-center z-40 px-6">
+            <motion.p animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity }} className="font-mono text-[9px] md:text-[10px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase">
+              Wische, um das Archiv zu belichten
+            </motion.p>
+          </div>
+        </div>
+      ) : (
+        <div className="p-4 md:p-16 overflow-y-auto h-full hide-scrollbar relative bg-black">
+          <button 
+            onClick={() => setCurrentCategory(null)} 
+            className="text-red-600 font-mono text-[9px] md:text-[10px] mb-8 md:mb-12 tracking-widest uppercase border border-red-600/30 px-4 md:px-6 py-2 hover:bg-red-600 hover:text-white transition-all rounded-sm relative z-50"
+          >
+            ← Zurück
+          </button>
+
+          <h1 className="text-5xl md:text-[8rem] font-black mb-10 md:mb-16 tracking-tighter leading-none text-white uppercase italic">
+            {currentCategory}
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6 max-w-[1600px] mx-auto pb-40">
+            {images.map((img, index) => (
+              <div key={index} className="break-inside-avoid">
+                <DevelopingImage src={img.url} />
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      )}
+    </main>
   );
 }
