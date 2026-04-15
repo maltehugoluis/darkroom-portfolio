@@ -36,41 +36,46 @@ export default function Lightbox({ src, onClose, exif = {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      // Der gesamte Hintergrund schließt die Lightbox
+      // Schließt die Lightbox beim Klick auf den Hintergrund
       onClick={onClose}
       onMouseEnter={() => setIsHoveringBackground(true)}
       onMouseLeave={() => setIsHoveringBackground(false)}
       className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-6 md:p-12 cursor-none"
     >
-      {/* Hover-Text folgt dem Cursor überall auf dem Hintergrund */}
+      {isHoveringBackground && !isMobile && (
+        <style>{`.custom-cursor { opacity: 0 !important; }`}</style>
+      )}
+
       <AnimatePresence>
         {isHoveringBackground && !isMobile && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed pointer-events-none z-[220] text-red-600 font-mono text-[10px] tracking-widest whitespace-nowrap"
+          <div 
+            className="fixed top-0 left-0 pointer-events-none z-[220]"
             style={{ 
-              left: 'calc(var(--x) + 20px)', 
-              top: 'var(--y)', 
-              transform: 'translateY(-50%)' 
+              transform: 'translate3d(var(--x), var(--y), 0) translate(-50%, -50%)' 
             }}
           >
-            ✕ SCHLIESSEN
-          </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.15 }}
+              className="text-red-600 font-mono text-[13px] md:text-[15px] font-bold tracking-[0.3em] whitespace-nowrap"
+            >
+              SCHLIESSEN
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      <div 
-        className="relative flex flex-col md:flex-row items-center justify-center w-full max-w-5xl h-full gap-8 md:gap-16 z-[210]"
-        // Verhindert, dass Klicks auf das Bild oder die EXIF-Daten die Lightbox schließen
-        onClick={(e) => e.stopPropagation()}
-        onMouseEnter={() => setIsHoveringBackground(false)}
-        onMouseLeave={() => setIsHoveringBackground(true)}
-      >
+      <div className="relative flex flex-col md:flex-row items-center justify-center w-full max-w-5xl h-full gap-8 md:gap-16 z-[210] pointer-events-none">
         
         {/* BILD-CONTAINER */}
-        <div className="flex-[2] flex items-center justify-center w-full h-full max-h-[50vh] md:max-h-[70vh]">
+        <div 
+          className="flex-[2] flex items-center justify-center w-full h-full max-h-[50vh] md:max-h-[70vh] pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+          onMouseEnter={() => setIsHoveringBackground(false)}
+          onMouseLeave={() => setIsHoveringBackground(true)}
+        >
           <motion.img
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -81,7 +86,12 @@ export default function Lightbox({ src, onClose, exif = {
         </div>
 
         {/* EXIF SEITENLEISTE */}
-        <div className="flex-1 md:max-w-[200px] w-full flex md:flex-col justify-between md:justify-center gap-6 border-t md:border-t-0 md:border-l border-zinc-800 pt-6 md:pt-0 md:pl-10">
+        <div 
+          className="flex-1 md:max-w-[200px] w-full flex md:flex-col justify-between md:justify-center gap-6 border-t md:border-t-0 md:border-l border-zinc-800 pt-6 md:pt-0 md:pl-10 pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+          onMouseEnter={() => setIsHoveringBackground(false)}
+          onMouseLeave={() => setIsHoveringBackground(true)}
+        >
           <div className="space-y-5">
             <div>
               <p className="text-[9px] text-zinc-600 font-mono mb-1 uppercase tracking-tighter">Device</p>

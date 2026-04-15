@@ -241,17 +241,18 @@ export default function DarkroomCanvas() {
             onClick={handleBackAction}
           />
           <AnimatePresence>
-            {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
-              <motion.div 
-                initial={{ opacity: 0, x: -10, y: "-50%" }} 
-                animate={{ opacity: 1, x: 0, y: "-50%" }} 
-                exit={{ opacity: 0, x: -10, y: "-50%" }}
-                className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
-                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)' }}>
-                ← ZURÜCK
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
+            <motion.div 
+              initial={{ opacity: 0, x: -10, y: "-50%" }} 
+              animate={{ opacity: 1, x: 0, y: "-50%" }} 
+              exit={{ opacity: 0, x: -10, y: "-50%" }}
+              // Hier wurde die Schriftgröße auf 15px und Font-Bold erhöht:
+              className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[13px] md:text-[15px] font-bold tracking-[0.3em] whitespace-nowrap"
+              style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)' }}>
+              ← ZURÜCK
+            </motion.div>
+          )}
+           </AnimatePresence>
 
           <motion.button initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
             whileTap={{ scale: 0.75, rotate: 45 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
