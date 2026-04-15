@@ -22,6 +22,9 @@ let bufferHeight = 0;
 export default function DarkroomCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
+  const lastScrollPos = useRef(0);
+
   const [loading, setLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [images, setImages] = useState<any[]>([]);
@@ -32,13 +35,81 @@ export default function DarkroomCanvas() {
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
 
-  useEffect(() => {
-    setIsMobile(window.innerWidth < 768);
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
+  // --- AUDIO LOGIK ---
+  const playClickSound = () => {
+    const audio = new Audio('/click.mp3'); 
+    audio.volume = 0.3; 
+    audio.play().catch(() => {});
+  };
 
+  const playScrollSound = () => {
+    const audio = new Audio('/scroll-tick.mp3'); 
+    audio.volume = 0.05; 
+    audio.play().catch(() => {});
+  };
+
+  const playAutofocusSound = () => {
+    const audio = new Audio('/autofocus.mp3');
+    audio.volume = 0.4;
+    audio.play().catch(() => {});
+  };
+
+  // Initialisierung & Autoplay-Workaround für das Brummen
+  useEffect(() => {
+    ambientAudioRef.current = new Audio('/ambient-hum.mp3');
+    if (ambientAudioRef.current) {
+      ambientAudioRef.current.loop = true;
+      ambientAudioRef.current.volume = 0.15;
+    }
+
+    const startAmbient = () => {
+      ambientAudioRef.current?.play().catch(() => {});
+      window.removeEventListener('click', startAmbient);
+      window.removeEventListener('touchstart', startAmbient);
+    };
+
+    window.addEventListener('click', startAmbient);
+    window.addEventListener('touchstart', startAmbient);
+
+    return () => {
+      ambientAudioRef.current?.pause();
+      window.removeEventListener('click', startAmbient);
+      window.removeEventListener('touchstart', startAmbient);
+    };
+  }, []);
+
+  // --- HOOKS & RESETS ---
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Reset Hover bei Kategoriewechsel
+  useEffect(() => {
+    setLeftZoneHovered(false);
+  }, [currentCategory]);
+
+  // Scroll Tick Sound
+  useEffect(() => {
     const el = scrollContainerRef.current;
-    if (el && window.innerWidth >= 768) {
+    if (!el) return;
+    const handleScroll = () => {
+      const currentPos = el.scrollLeft;
+      if (Math.abs(currentPos - lastScrollPos.current) > 150) {
+        playScrollSound();
+        lastScrollPos.current = currentPos;
+      }
+    };
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [currentCategory]);
+
+  // Desktop Wheel Scroll
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (el && !isMobile && currentCategory) {
       const onWheel = (e: WheelEvent) => {
         if (e.deltaY === 0) return;
         e.preventDefault();
@@ -47,29 +118,18 @@ export default function DarkroomCanvas() {
           behavior: 'smooth'
         });
       };
-      el.addEventListener('wheel', onWheel);
-      return () => {
-        el.removeEventListener('wheel', onWheel);
-        window.removeEventListener('resize', handleResize);
-      };
+      el.addEventListener('wheel', onWheel, { passive: false });
+      return () => el.removeEventListener('wheel', onWheel);
     }
-    return () => window.removeEventListener('resize', handleResize);
-  }, [currentCategory]);
+  }, [currentCategory, isMobile]);
 
-  const playClickSound = () => {
-    const audio = new Audio('/click.mp3'); 
-    audio.volume = 0.4; 
-    audio.play().catch(err => console.log("Audio play blocked:", err));
-  };
-
+  // --- SUPABASE & EXIF ---
   const checkAndEnrichExif = async (imgObj: any) => {
     if (imgObj.camera && imgObj.camera !== "Unknown Camera") return imgObj;
-
     try {
       const response = await fetch(imgObj.url);
       const arrayBuffer = await response.arrayBuffer();
       const tags = ExifReader.load(arrayBuffer);
-
       const exifData = {
         camera: tags['Model']?.description || "Unknown Camera",
         lens: tags['LensModel']?.description || "Unknown Lens",
@@ -77,89 +137,19 @@ export default function DarkroomCanvas() {
         fstop: tags['FNumber']?.description || "---",
         shutter: tags['ExposureTime']?.description || "---"
       };
-
-      await supabase
-        .from('images')
-        .update(exifData)
-        .eq('url', imgObj.url);
-
-      setImages(prev => prev.map(img => 
-        img.url === imgObj.url ? { ...img, ...exifData } : img
-      ));
-
+      await supabase.from('images').update(exifData).eq('url', imgObj.url);
+      setImages(prev => prev.map(img => img.url === imgObj.url ? { ...img, ...exifData } : img));
       return { ...imgObj, ...exifData };
     } catch (err) {
-      console.error("EXIF Error:", err);
       return imgObj;
     }
   };
 
-  useEffect(() => {
-    let rafId: number;
-    const updatePosition = (x: number, y: number) => {
-      document.documentElement.style.setProperty('--x', `${x}px`);
-      document.documentElement.style.setProperty('--y', `${y}px`);
-
-      if (!currentCategory && canvasRef.current) {
-        rafId = requestAnimationFrame(() => {
-          const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
-          if (ctx) {
-            const radius = window.innerWidth < 768 ? 45 : 100;
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius); 
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        });
-      }
-    };
-
-    const handleMouseMove = (e: MouseEvent) => updatePosition(e.clientX, e.clientY);
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches[0]) updatePosition(e.touches[0].clientX, e.touches[0].clientY);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false }); 
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('touchmove', handleTouchMove);
-      cancelAnimationFrame(rafId);
-    };
-  }, [currentCategory]);
-
-  useEffect(() => {
-    if (currentCategory) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    
-    const init = () => {
-      if (!ctx) return; 
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      if (globalCanvasBuffer && bufferWidth === canvas.width && bufferHeight === canvas.height) {
-        ctx.putImageData(globalCanvasBuffer, 0, 0);
-      } else {
-        ctx.fillStyle = 'black'; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        globalCanvasBuffer = null;
-      }
-      ctx.globalCompositeOperation = 'destination-out';
-      setCanvasReady(true);
-    };
-    
-    init();
-    window.addEventListener('resize', init);
-    return () => window.removeEventListener('resize', init);
-  }, [currentCategory]);
-
+  // --- NAVIGATION ---
   const selectCategory = async (label: string) => {
     playClickSound();
+    playAutofocusSound();
+    
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
       if (ctx) {
@@ -185,12 +175,64 @@ export default function DarkroomCanvas() {
     }
   };
 
-  const handleCopy = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault(); 
-    navigator.clipboard.writeText("breuermalte@icloud.com"); 
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  // --- CANVAS INTERACTION ---
+  useEffect(() => {
+    let rafId: number;
+    const updatePosition = (x: number, y: number) => {
+      document.documentElement.style.setProperty('--x', `${x}px`);
+      document.documentElement.style.setProperty('--y', `${y}px`);
+      if (!currentCategory && canvasRef.current) {
+        rafId = requestAnimationFrame(() => {
+          const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
+          if (ctx) {
+            const radius = isMobile ? 45 : 100;
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius); 
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+    };
+    const handleMouseMove = (e: MouseEvent) => updatePosition(e.clientX, e.clientY);
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) updatePosition(e.touches[0].clientX, e.touches[0].clientY);
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false }); 
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, [currentCategory, isMobile]);
+
+  useEffect(() => {
+    if (currentCategory) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const init = () => {
+      if (!ctx) return; 
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      if (globalCanvasBuffer && bufferWidth === canvas.width && bufferHeight === canvas.height) {
+        ctx.putImageData(globalCanvasBuffer, 0, 0);
+      } else {
+        ctx.fillStyle = 'black'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        globalCanvasBuffer = null;
+      }
+      ctx.globalCompositeOperation = 'destination-out';
+      setCanvasReady(true);
+    };
+    init();
+    window.addEventListener('resize', init);
+    return () => window.removeEventListener('resize', init);
+  }, [currentCategory]);
 
   return (
     <main className="h-screen w-screen bg-black overflow-hidden relative">
@@ -203,38 +245,25 @@ export default function DarkroomCanvas() {
       {(currentCategory || selectedImage) && (
         <>
           <div 
-            className="hidden md:block fixed top-0 left-0 w-32 xl:w-48 h-full z-[250] cursor-none"
+            className="hidden md:block fixed top-0 left-0 w-24 xl:w-32 h-full z-[250] cursor-none"
             onMouseEnter={() => setLeftZoneHovered(true)}
             onMouseLeave={() => setLeftZoneHovered(false)}
             onClick={handleBackAction}
           />
-
           <AnimatePresence>
-            {leftZoneHovered && !isMobile && (
-              <motion.div 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+            {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
+              <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
                 className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
-                style={{ 
-                  left: 'calc(var(--x) + 25px)', 
-                  top: 'var(--y)', 
-                  transform: 'translateY(-50%)' 
-                }}
-              >
-                {selectedImage ? '← SCHLIESSEN' : '← ZURÜCK'}
+                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)', transform: 'translateY(-50%)' }}>
+                ← ZURÜCK
               </motion.div>
             )}
           </AnimatePresence>
 
-          <motion.button 
-            initial={{ opacity: 0, scale: 0.8, x: '-50%' }}
-            animate={{ opacity: 1, scale: 1, x: '-50%' }}
-            whileTap={{ scale: 0.75, rotate: 45 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          <motion.button initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
+            whileTap={{ scale: 0.75, rotate: 45 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
             onClick={handleBackAction} 
-            className="md:hidden fixed bottom-10 left-1/2 z-[300] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center transition-colors duration-300 active:border-red-500 active:bg-red-950/40"
-          >
+            className="md:hidden fixed bottom-10 left-1/2 z-[300] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center">
             <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
               <span className="text-red-600 font-mono text-lg">←</span>
             </div>
@@ -244,76 +273,43 @@ export default function DarkroomCanvas() {
 
       {!currentCategory ? (
         <div className="relative h-full w-full bg-black touch-none">
-          <div className={`absolute inset-0 flex flex-col items-center justify-center gap-[clamp(1rem,3vh,3rem)] p-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`absolute inset-0 flex flex-col items-center justify-center gap-6 p-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
             {MENU.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => selectCategory(item.label)}
-                className="text-[clamp(3.5rem,10vw,6.5rem)] font-black text-white tracking-tighter leading-none 
-                           hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] 
-                           active:text-red-600 active:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]
-                           transition-all duration-500 uppercase select-none outline-none"
-              >
+              <button key={item.id} onClick={() => selectCategory(item.label)}
+                className="text-[clamp(3.5rem,10vw,6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
                 {item.label}
               </button>
             ))}
           </div>
-          
           <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
-          
           <div className="absolute bottom-10 left-0 w-full text-center z-[40] px-6 pointer-events-none">
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0.3, 0.7, 0.3] }} 
-              transition={{ duration: 3, repeat: Infinity, delay: 1 }} 
-              className="font-mono text-[10px] md:text-[9px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase antialiased"
-            >
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }} 
+              className="font-mono text-[10px] md:text-[9px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase">
               {isMobile ? "Wische, um das Archiv zu belichten" : "Bewege die Maus, um das Archiv zu belichten"}
             </motion.p>
           </div>
-
-          <div 
-            className="pointer-events-none fixed inset-0 z-30 mix-blend-screen" 
-            style={{ 
-              background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(0,0,0,0) 70%)` 
-            }} 
+          <div className="pointer-events-none fixed inset-0 z-30 mix-blend-screen" 
+            style={{ background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(0,0,0,0) 70%)` }} 
           />
         </div>
       ) : currentCategory === "KONTAKT" ? (
-        <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black">
-          <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-4 tracking-tighter leading-none text-white uppercase italic text-center transition-all duration-500">
-            SAY HELLO
-          </h1>
-          <div className="flex flex-col items-center gap-4 md:gap-[clamp(1rem,4vh,2.5rem)] w-full max-w-xs md:max-w-none">
-            <a href="mailto:breuermalte@icloud.com" onClick={handleCopy} className="text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-500 tracking-[0.2em] uppercase">
-              {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
-            </a>
-          </div>
+        <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center">
+          <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-4 text-white uppercase italic">SAY HELLO</h1>
+          <a href="mailto:breuermalte@icloud.com" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText("breuermalte@icloud.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); }} 
+             className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase">
+            {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
+          </a>
         </div>
       ) : (
-        <div 
-          ref={scrollContainerRef}
-          className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black md:px-[10vw]"
-        >
+        <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black md:px-[10vw]">
           <div className="flex-shrink-0 pt-24 pb-12 md:py-0 md:mr-[8vw] flex items-center justify-center">
-            <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black text-white uppercase italic">
-              {currentCategory}
-            </h1>
+            <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic">{currentCategory}</h1>
           </div>
-          
           <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-center justify-center pb-40 md:pb-0 px-6 md:px-0">
             {images.map((img, index) => (
-              <div 
-                key={index} 
-                className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02]"
-                onClick={() => {
-                  setSelectedImage(img.url);
-                  checkAndEnrichExif(img);
-                }}
-              >
-                <div className="w-full md:w-auto md:h-full">
-                  <DevelopingImage src={img.url} />
-                </div>
+              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center"
+                onClick={() => { setSelectedImage(img.url); checkAndEnrichExif(img); playClickSound(); }}>
+                <div className="w-full md:w-auto md:h-full"><DevelopingImage src={img.url} /></div>
               </div>
             ))}
           </div>
@@ -321,13 +317,7 @@ export default function DarkroomCanvas() {
       )}
 
       <AnimatePresence>
-        {selectedImage && (
-          <Lightbox 
-            src={selectedImage} 
-            exif={images.find(i => i.url === selectedImage)}
-            onClose={() => setSelectedImage(null)} 
-          />
-        )}
+        {selectedImage && <Lightbox src={selectedImage} exif={images.find(i => i.url === selectedImage)} onClose={() => setSelectedImage(null)} />}
       </AnimatePresence>
     </main>
   );
