@@ -24,7 +24,6 @@ let bufferHeight = 0;
 function DarkroomContent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
   const searchParams = useSearchParams();
 
   const [loading, setLoading] = useState(false);
@@ -37,6 +36,7 @@ function DarkroomContent() {
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
 
+  // Check URL Params to reopen Kontakt
   useEffect(() => {
     const from = searchParams.get('from');
     if (from === 'kontakt') {
@@ -57,26 +57,6 @@ function DarkroomContent() {
   };
 
   useEffect(() => {
-    ambientAudioRef.current = new Audio('/ambient-hum.mp3');
-    if (ambientAudioRef.current) {
-      ambientAudioRef.current.loop = true;
-      ambientAudioRef.current.volume = 0.15;
-    }
-    const startAmbient = () => {
-      ambientAudioRef.current?.play().catch(() => {});
-      window.removeEventListener('click', startAmbient);
-      window.removeEventListener('touchstart', startAmbient);
-    };
-    window.addEventListener('click', startAmbient);
-    window.addEventListener('touchstart', startAmbient);
-    return () => {
-      ambientAudioRef.current?.pause();
-      window.removeEventListener('click', startAmbient);
-      window.removeEventListener('touchstart', startAmbient);
-    };
-  }, []);
-
-  useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -90,16 +70,14 @@ function DarkroomContent() {
     }
   }, [currentCategory]);
 
+  // DIREKTES HORIZONTALES SCROLLEN (FIX FÜR PERFORMANCE)
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (el && !isMobile && currentCategory) {
       const onWheel = (e: WheelEvent) => {
         if (e.deltaY === 0) return;
         e.preventDefault();
-        el.scrollTo({
-          left: el.scrollLeft + e.deltaY * 3.5,
-          behavior: 'smooth'
-        });
+        el.scrollLeft += e.deltaY * 2.5;
       };
       el.addEventListener('wheel', onWheel, { passive: false });
       return () => el.removeEventListener('wheel', onWheel);
@@ -228,7 +206,7 @@ function DarkroomContent() {
   }, [currentCategory]);
 
   return (
-    <main className="h-screen w-screen bg-black overflow-hidden relative">
+    <main className="h-screen w-screen bg-black overflow-hidden relative selection:bg-red-600 selection:text-white">
       <AnimatePresence>
         {loading && <ChemistryTimer onComplete={() => {}} />}
       </AnimatePresence>
@@ -293,7 +271,6 @@ function DarkroomContent() {
           <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
             SAY HELLO
           </h1>
-          
           <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
             <a href="mailto:breuermalte@icloud.com" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText("breuermalte@icloud.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); playClickSound(); }} 
               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">
@@ -305,7 +282,6 @@ function DarkroomContent() {
             </a>
           </div>
 
-          {/* RECHTLICHES FOOTER - Noch weiter hochgesetzt für Mobile (bottom-40) */}
           <div className="absolute bottom-40 md:bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
             <div className="flex gap-8">
               <Link href="/impressum?from=kontakt" className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Impressum</Link>
@@ -315,10 +291,13 @@ function DarkroomContent() {
           </div>
         </div>
       ) : (
-        <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
+        <div 
+          ref={scrollContainerRef} 
+          className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black"
+        >
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
             <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center">
-              <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
+              <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">
                 {currentCategory}
               </h1>
             </div>
