@@ -37,7 +37,6 @@ function DarkroomContent() {
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
 
-  // Check URL Params to reopen Kontakt
   useEffect(() => {
     const from = searchParams.get('from');
     if (from === 'kontakt') {
@@ -294,7 +293,7 @@ function DarkroomContent() {
           <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
             SAY HELLO
           </h1>
-          <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24">
+          <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
             <a href="mailto:breuermalte@icloud.com" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText("breuermalte@icloud.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); playClickSound(); }} 
               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
@@ -304,7 +303,8 @@ function DarkroomContent() {
               INSTAGRAM
             </a>
           </div>
-          <div className="absolute bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
+
+          <div className="absolute bottom-32 md:bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
             <div className="flex gap-8">
               <Link href="/impressum?from=kontakt" className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Impressum</Link>
               <Link href="/datenschutz?from=kontakt" className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Datenschutz</Link>
@@ -315,7 +315,7 @@ function DarkroomContent() {
       ) : (
         <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
-            <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
+            <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center">
               <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
                 {currentCategory}
               </h1>
