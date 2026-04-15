@@ -158,12 +158,13 @@ export default function DarkroomCanvas() {
 
       {!currentCategory ? (
         <div className="relative h-full w-full bg-black touch-none">
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-[clamp(0.5rem,2.5vh,3rem)] p-4">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-[clamp(1rem,3vh,3rem)] p-4">
             {MENU.map((item) => (
               <button
                 key={item.id}
                 onClick={() => selectCategory(item.label)}
-                className="text-[clamp(2rem,min(8vw,10vh),5.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500 uppercase select-none"
+                // HIER: Minimalgröße auf 3.5rem (wie text-6xl) hochgesetzt, wächst bis 6.5rem
+                className="text-[clamp(3.5rem,10vw,6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500 uppercase select-none"
               >
                 {item.label}
               </button>
@@ -185,7 +186,7 @@ export default function DarkroomCanvas() {
       ) : currentCategory === "KONTAKT" ? (
         
         <div className="p-4 md:p-16 pt-32 h-full flex flex-col justify-center items-center relative bg-black">
-          <h1 className="text-[clamp(2.5rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(1.5rem,5vh,4rem)] tracking-tighter leading-none text-white uppercase italic text-center hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
+          <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(1.5rem,5vh,4rem)] tracking-tighter leading-none text-white uppercase italic text-center hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
             SAY HELLO
           </h1>
 
@@ -215,7 +216,7 @@ export default function DarkroomCanvas() {
       ) : (
 
         <div className="p-4 pt-28 md:p-16 md:pt-32 overflow-y-auto h-full hide-scrollbar relative bg-black">
-          <h1 className="text-[clamp(3rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(1.5rem,5vh,4rem)] tracking-tighter leading-none text-white uppercase italic hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
+          <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(1.5rem,5vh,4rem)] tracking-tighter leading-none text-white uppercase italic hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
             {currentCategory}
           </h1>
 
