@@ -293,6 +293,7 @@ function DarkroomContent() {
           <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
             SAY HELLO
           </h1>
+          
           <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
             <a href="mailto:breuermalte@icloud.com" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText("breuermalte@icloud.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); playClickSound(); }} 
               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">
@@ -304,7 +305,8 @@ function DarkroomContent() {
             </a>
           </div>
 
-          <div className="absolute bottom-32 md:bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
+          {/* RECHTLICHES FOOTER - Noch weiter hochgesetzt für Mobile (bottom-40) */}
+          <div className="absolute bottom-40 md:bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
             <div className="flex gap-8">
               <Link href="/impressum?from=kontakt" className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Impressum</Link>
               <Link href="/datenschutz?from=kontakt" className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Datenschutz</Link>
