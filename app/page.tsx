@@ -70,7 +70,7 @@ function DarkroomContent() {
     }
   }, [currentCategory]);
 
-  // Horizontales Scrollen für Desktop
+  // Horizontales Scrollen für Desktop (Fix für Performance)
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (el && !isMobile && currentCategory) {
@@ -143,7 +143,7 @@ function DarkroomContent() {
     if (selectedImage) {
       setSelectedImage(null);
     } else {
-      // FIX: URL bereinigen, damit das Hauptmenü wieder erscheint
+      // URL bereinigen, damit das Hauptmenü wieder erscheint
       if (currentCategory === "KONTAKT") {
         window.history.replaceState(null, '', '/');
       }
@@ -251,7 +251,7 @@ function DarkroomContent() {
 
       {/* RENDER LOGIK FÜR HAUPTMENÜ / DARKROOM */}
       {!currentCategory ? (
-        // FIX: Nur schwarz rendern, wenn wir gerade wirklich von Impressum laden
+        // Nur schwarz rendern, wenn wir gerade wirklich von Impressum/Datenschutz laden
         searchParams.get('from') === 'kontakt' && currentCategory === null ? (
           <div className="h-screen w-screen bg-black" />
         ) : (
@@ -294,8 +294,20 @@ function DarkroomContent() {
 
           <div className="absolute bottom-40 md:bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
             <div className="flex gap-8">
-              <Link href="/impressum?from=kontakt" className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Impressum</Link>
-              <Link href="/datenschutz?from=kontakt" className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Datenschutz</Link>
+              <Link 
+                href="/impressum?from=kontakt" 
+                onClick={playClickSound}
+                className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors"
+              >
+                Impressum
+              </Link>
+              <Link 
+                href="/datenschutz?from=kontakt" 
+                onClick={playClickSound}
+                className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors"
+              >
+                Datenschutz
+              </Link>
             </div>
             <p className="text-[11px] font-mono text-zinc-700 tracking-[0.3em] uppercase">© 2026 MALTE BREUER — ALL RIGHTS RESERVED</p>
           </div>
