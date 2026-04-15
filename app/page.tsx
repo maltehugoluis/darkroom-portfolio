@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
+import ExifReader from 'exifreader';
 import ChemistryTimer from '@/components/ChemistryTimer';
 import DevelopingImage from '@/components/DevelopingImage';
 import Lightbox from '@/components/Lightbox';
@@ -23,7 +24,7 @@ export default function DarkroomCanvas() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
-  const [images, setImages] = useState<{ url: string }[]>([]);
+  const [images, setImages] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const [copied, setCopied] = useState(false);
@@ -59,6 +60,38 @@ export default function DarkroomCanvas() {
     const audio = new Audio('/click.mp3'); 
     audio.volume = 0.4; 
     audio.play().catch(err => console.log("Audio play blocked:", err));
+  };
+
+  const checkAndEnrichExif = async (imgObj: any) => {
+    if (imgObj.camera && imgObj.camera !== "Unknown Camera") return imgObj;
+
+    try {
+      const response = await fetch(imgObj.url);
+      const arrayBuffer = await response.arrayBuffer();
+      const tags = ExifReader.load(arrayBuffer);
+
+      const exifData = {
+        camera: tags['Model']?.description || "Unknown Camera",
+        lens: tags['LensModel']?.description || "Unknown Lens",
+        iso: tags['ISOSpeedRatings']?.description?.toString() || "---",
+        fstop: tags['FNumber']?.description || "---",
+        shutter: tags['ExposureTime']?.description || "---"
+      };
+
+      await supabase
+        .from('images')
+        .update(exifData)
+        .eq('url', imgObj.url);
+
+      setImages(prev => prev.map(img => 
+        img.url === imgObj.url ? { ...img, ...exifData } : img
+      ));
+
+      return { ...imgObj, ...exifData };
+    } catch (err) {
+      console.error("EXIF Error:", err);
+      return imgObj;
+    }
   };
 
   useEffect(() => {
@@ -137,7 +170,7 @@ export default function DarkroomCanvas() {
     }
     setLoading(true);
     if (label !== "KONTAKT") {
-      const { data, error } = await supabase.from('images').select('url').eq('category', label);
+      const { data, error } = await supabase.from('images').select('*').eq('category', label);
       if (!error) setImages(data || []);
     }
     setTimeout(() => { setLoading(false); setCurrentCategory(label); }, 1500);
@@ -167,7 +200,6 @@ export default function DarkroomCanvas() {
 
       <div className="custom-cursor" />
 
-      {/* NAVIGATION BUTTON (ZURÜCK) */}
       {(currentCategory || selectedImage) && (
         <>
           <div 
@@ -201,7 +233,7 @@ export default function DarkroomCanvas() {
             whileTap={{ scale: 0.75, rotate: 45 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             onClick={handleBackAction} 
-            className="fixed bottom-10 left-1/2 z-[300] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center transition-colors duration-300 active:border-red-500 active:bg-red-950/40"
+            className="md:hidden fixed bottom-10 left-1/2 z-[300] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center transition-colors duration-300 active:border-red-500 active:bg-red-950/40"
           >
             <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
               <span className="text-red-600 font-mono text-lg">←</span>
@@ -217,13 +249,30 @@ export default function DarkroomCanvas() {
               <button
                 key={item.id}
                 onClick={() => selectCategory(item.label)}
-                className="text-[clamp(3.5rem,10vw,6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500 uppercase select-none"
+                // HIER GEÄNDERT: active: Klassen für Mobile Glow hinzugefügt
+                className="text-[clamp(3.5rem,10vw,6.5rem)] font-black text-white tracking-tighter leading-none 
+                           hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] 
+                           active:text-red-600 active:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]
+                           transition-all duration-500 uppercase select-none outline-none"
               >
                 {item.label}
               </button>
             ))}
           </div>
+          
           <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
+          
+          <div className="absolute bottom-10 left-0 w-full text-center z-[40] px-6 pointer-events-none">
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0.3, 0.7, 0.3] }} 
+              transition={{ duration: 3, repeat: Infinity, delay: 1 }} 
+              className="font-mono text-[10px] md:text-[9px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase antialiased"
+            >
+              {isMobile ? "Wische, um das Archiv zu belichten" : "Bewege die Maus, um das Archiv zu belichten"}
+            </motion.p>
+          </div>
+
           <div 
             className="pointer-events-none fixed inset-0 z-30 mix-blend-screen" 
             style={{ 
@@ -257,8 +306,11 @@ export default function DarkroomCanvas() {
             {images.map((img, index) => (
               <div 
                 key={index} 
-                className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center"
-                onClick={() => setSelectedImage(img.url)}
+                className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02]"
+                onClick={() => {
+                  setSelectedImage(img.url);
+                  checkAndEnrichExif(img);
+                }}
               >
                 <div className="w-full md:w-auto md:h-full">
                   <DevelopingImage src={img.url} />
@@ -273,6 +325,7 @@ export default function DarkroomCanvas() {
         {selectedImage && (
           <Lightbox 
             src={selectedImage} 
+            exif={images.find(i => i.url === selectedImage)}
             onClose={() => setSelectedImage(null)} 
           />
         )}
