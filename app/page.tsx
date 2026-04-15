@@ -25,6 +25,7 @@ export default function DarkroomCanvas() {
   
   const [copied, setCopied] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [leftZoneHovered, setLeftZoneHovered] = useState(false);
 
   const playClickSound = () => {
     const audio = new Audio('/click.mp3'); 
@@ -144,16 +145,53 @@ export default function DarkroomCanvas() {
       <div className="custom-cursor" />
 
       {currentCategory && (
-        <button 
-          onClick={() => {
-            playClickSound(); 
-            setCurrentCategory(null);
-          }} 
-          className="fixed top-6 left-6 md:top-10 md:left-10 z-[100] group flex items-center gap-2 md:gap-3 px-4 md:px-5 py-2 md:py-2.5 bg-black/60 backdrop-blur-md border border-red-900/40 text-red-600 font-mono text-[10px] md:text-xs tracking-widest uppercase hover:bg-red-950/40 hover:text-red-400 hover:border-red-600/60 hover:shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all duration-300 rounded-sm"
-        >
-          <span className="group-hover:-translate-x-1 transition-transform duration-300">←</span>
-          <span>Zurück</span>
-        </button>
+        <>
+          {/* DESKTOP BACK ZONE */}
+          <div 
+            className="hidden md:block fixed top-0 left-0 w-32 xl:w-48 h-full z-[100] cursor-none"
+            onMouseEnter={() => setLeftZoneHovered(true)}
+            onMouseLeave={() => setLeftZoneHovered(false)}
+            onClick={() => {
+              playClickSound();
+              setCurrentCategory(null);
+              setLeftZoneHovered(false);
+            }}
+          />
+
+          <AnimatePresence>
+            {leftZoneHovered && !isMobile && (
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="fixed pointer-events-none z-[110] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
+                style={{ 
+                  left: 'calc(var(--x) + 25px)', 
+                  top: 'var(--y)', 
+                  transform: 'translateY(-50%)' 
+                }}
+              >
+                ← ZURÜCK
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* MOBILE BACK BUTTON: Floating Focus Ring */}
+          <motion.button 
+            initial={{ opacity: 0, scale: 0.8, x: '-50%' }}
+            animate={{ opacity: 1, scale: 1, x: '-50%' }}
+            whileTap={{ scale: 0.9, rotate: 90 }}
+            onClick={() => {
+              playClickSound(); 
+              setCurrentCategory(null);
+            }} 
+            className="md:hidden fixed bottom-10 left-1/2 z-[100] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center transition-transform duration-700 hover:rotate-180"
+          >
+            <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
+              <span className="text-red-600 font-mono text-lg">←</span>
+            </div>
+          </motion.button>
+        </>
       )}
 
       {!currentCategory ? (
@@ -170,12 +208,14 @@ export default function DarkroomCanvas() {
             ))}
           </div>
           <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
+          
           <div 
-            className="pointer-events-none fixed inset-0 z-30 opacity-20" 
+            className="pointer-events-none fixed inset-0 z-30 mix-blend-screen" 
             style={{ 
-              background: `radial-gradient(circle ${isMobile ? '60px' : '150px'} at var(--x) var(--y), rgba(220, 38, 38, 0.4) 0%, transparent 100%)` 
+              background: `radial-gradient(circle ${isMobile ? '200px' : '500px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(200, 0, 0, 0.2) 35%, rgba(100, 0, 0, 0) 70%)` 
             }} 
           />
+
           <div className="absolute bottom-10 w-full text-center z-40 px-6">
             <motion.p animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity }} className="font-mono text-[12px] md:text-[10px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase">
               Wische, um das Archiv zu belichten
