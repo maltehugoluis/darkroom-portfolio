@@ -153,8 +153,10 @@ export default function DarkroomCanvas() {
             onMouseLeave={() => setLeftZoneHovered(false)}
             onClick={() => {
               playClickSound();
-              setCurrentCategory(null);
-              setLeftZoneHovered(false);
+              setTimeout(() => {
+                setCurrentCategory(null);
+                setLeftZoneHovered(false);
+              }, 250);
             }}
           />
 
@@ -180,12 +182,15 @@ export default function DarkroomCanvas() {
           <motion.button 
             initial={{ opacity: 0, scale: 0.8, x: '-50%' }}
             animate={{ opacity: 1, scale: 1, x: '-50%' }}
-            whileTap={{ scale: 0.9, rotate: 90 }}
+            whileTap={{ scale: 0.75, rotate: 45 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
             onClick={() => {
               playClickSound(); 
-              setCurrentCategory(null);
+              setTimeout(() => {
+                setCurrentCategory(null);
+              }, 250);
             }} 
-            className="md:hidden fixed bottom-10 left-1/2 z-[100] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center transition-transform duration-700 hover:rotate-180"
+            className="md:hidden fixed bottom-10 left-1/2 z-[100] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center transition-colors duration-300 active:border-red-500 active:bg-red-950/40"
           >
             <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
               <span className="text-red-600 font-mono text-lg">←</span>
