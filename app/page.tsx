@@ -292,7 +292,7 @@ export default function DarkroomCanvas() {
                className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 hover:[text-shadow:0_0_20px_rgba(220,38,38,0.6)]">
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
             </a>
-            <a href="https://www.instagram.com/breuermalte" target="_blank" rel="noopener noreferrer" onClick={playClickSound}
+            <a href="https://www.instagram.com/mhlensvisuals" target="_blank" rel="noopener noreferrer" onClick={playClickSound}
                className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 hover:[text-shadow:0_0_20px_rgba(220,38,38,0.6)]">
               INSTAGRAM
             </a>
