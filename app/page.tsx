@@ -163,7 +163,6 @@ export default function DarkroomCanvas() {
               <button
                 key={item.id}
                 onClick={() => selectCategory(item.label)}
-                // HIER: Minimalgröße auf 3.5rem (wie text-6xl) hochgesetzt, wächst bis 6.5rem
                 className="text-[clamp(3.5rem,10vw,6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500 uppercase select-none"
               >
                 {item.label}
@@ -186,29 +185,29 @@ export default function DarkroomCanvas() {
       ) : currentCategory === "KONTAKT" ? (
         
         <div className="p-4 md:p-16 pt-32 h-full flex flex-col justify-center items-center relative bg-black">
-          <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(1.5rem,5vh,4rem)] tracking-tighter leading-none text-white uppercase italic text-center hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
+          <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(2.5rem,8vh,4rem)] tracking-tighter leading-none text-white uppercase italic text-center hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
             SAY HELLO
           </h1>
 
-          <div className="flex flex-col items-center gap-[clamp(1rem,4vh,2.5rem)]">
+          <div className="flex flex-col items-center gap-4 md:gap-[clamp(1rem,4vh,2.5rem)] w-full max-w-xs md:max-w-none">
             <a 
               href="mailto:breuermalte@icloud.com" 
               onClick={handleCopy}
-              className="group relative text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-500 hover:text-white hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.2em] uppercase cursor-none"
+              className="group relative w-full md:w-auto flex justify-center py-4 md:py-0 border border-zinc-800 md:border-none bg-[#0a0a0a] md:bg-transparent text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-400 md:text-zinc-500 hover:text-white hover:border-red-900/60 md:hover:border-none md:hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.15em] md:tracking-[0.2em] uppercase cursor-none"
             >
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
               
-              <span className={`absolute -bottom-3 left-0 h-[2px] bg-red-600 transition-all duration-500 ${copied ? 'w-full shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'w-0 group-hover:w-full group-hover:shadow-[0_0_15px_rgba(220,38,38,0.8)]'}`}></span>
+              <span className={`hidden md:block absolute -bottom-3 left-0 h-[2px] bg-red-600 transition-all duration-500 ${copied ? 'w-full shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'w-0 group-hover:w-full group-hover:shadow-[0_0_15px_rgba(220,38,38,0.8)]'}`}></span>
             </a>
 
             <a 
               href="https://www.instagram.com/mhlensvisuals/" 
               target="_blank" 
               rel="noreferrer"
-              className="group relative text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-500 hover:text-white hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.2em] uppercase cursor-none"
+              className="group relative w-full md:w-auto flex justify-center py-4 md:py-0 border border-zinc-800 md:border-none bg-[#0a0a0a] md:bg-transparent text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-400 md:text-zinc-500 hover:text-white hover:border-red-900/60 md:hover:border-none md:hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.15em] md:tracking-[0.2em] uppercase cursor-none"
             >
               @instagram
-              <span className="absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full group-hover:shadow-[0_0_15px_rgba(220,38,38,0.8)] transition-all duration-500"></span>
+              <span className="hidden md:block absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full group-hover:shadow-[0_0_15px_rgba(220,38,38,0.8)] transition-all duration-500"></span>
             </a>
           </div>
         </div>
