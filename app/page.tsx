@@ -23,7 +23,6 @@ export default function DarkroomCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
-  const lastScrollPos = useRef(0);
 
   const [loading, setLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
@@ -38,12 +37,6 @@ export default function DarkroomCanvas() {
   const playClickSound = () => {
     const audio = new Audio('/click.mp3'); 
     audio.volume = 0.3; 
-    audio.play().catch(() => {});
-  };
-
-  const playScrollSound = () => {
-    const audio = new Audio('/scroll-tick.mp3'); 
-    audio.volume = 0.05; 
     audio.play().catch(() => {});
   };
 
@@ -88,20 +81,6 @@ export default function DarkroomCanvas() {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollLeft = 0;
     }
-  }, [currentCategory]);
-
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const handleScroll = () => {
-      const currentPos = el.scrollLeft;
-      if (Math.abs(currentPos - lastScrollPos.current) > 150) {
-        playScrollSound();
-        lastScrollPos.current = currentPos;
-      }
-    };
-    el.addEventListener('scroll', handleScroll, { passive: true });
-    return () => el.removeEventListener('scroll', handleScroll);
   }, [currentCategory]);
 
   useEffect(() => {
@@ -251,7 +230,6 @@ export default function DarkroomCanvas() {
         {loading && <ChemistryTimer onComplete={() => {}} />}
       </AnimatePresence>
 
-      {/* DIE NEUE CURSOR-LOGIK: Blendet den Cursor auf Mobile in der Galerie aus */}
       {(!isMobile || !currentCategory) && <div className="custom-cursor" />}
 
       {(currentCategory || selectedImage) && (
@@ -265,8 +243,8 @@ export default function DarkroomCanvas() {
           <AnimatePresence>
             {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
-                className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
-                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)', transform: 'translateY(-50%)' }}>
+                className="fixed top-0 left-0 pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
+                style={{ transform: 'translate3d(calc(var(--x) + 25px), calc(var(--y) - 50%), 0)' }}>
                 ← ZURÜCK
               </motion.div>
             )}
