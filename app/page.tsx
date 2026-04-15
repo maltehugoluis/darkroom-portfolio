@@ -1,6 +1,8 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import ExifReader from 'exifreader';
 import ChemistryTimer from '@/components/ChemistryTimer';
@@ -19,10 +21,11 @@ let globalCanvasBuffer: ImageData | null = null;
 let bufferWidth = 0;
 let bufferHeight = 0;
 
-export default function DarkroomCanvas() {
+function DarkroomContent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
+  const searchParams = useSearchParams();
 
   const [loading, setLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
@@ -33,6 +36,14 @@ export default function DarkroomCanvas() {
   const [isMobile, setIsMobile] = useState(false);
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
+
+  // Check URL Params to reopen Kontakt
+  useEffect(() => {
+    const from = searchParams.get('from');
+    if (from === 'kontakt') {
+      setCurrentCategory('KONTAKT');
+    }
+  }, [searchParams]);
 
   const playClickSound = () => {
     const audio = new Audio('/click.mp3'); 
@@ -52,16 +63,13 @@ export default function DarkroomCanvas() {
       ambientAudioRef.current.loop = true;
       ambientAudioRef.current.volume = 0.15;
     }
-
     const startAmbient = () => {
       ambientAudioRef.current?.play().catch(() => {});
       window.removeEventListener('click', startAmbient);
       window.removeEventListener('touchstart', startAmbient);
     };
-
     window.addEventListener('click', startAmbient);
     window.addEventListener('touchstart', startAmbient);
-
     return () => {
       ambientAudioRef.current?.pause();
       window.removeEventListener('click', startAmbient);
@@ -123,7 +131,6 @@ export default function DarkroomCanvas() {
   const selectCategory = async (label: string) => {
     playClickSound();
     playAutofocusSound();
-    
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
       if (ctx) {
@@ -133,10 +140,8 @@ export default function DarkroomCanvas() {
       }
     }
     setLoading(true);
-    
     if (label !== "KONTAKT") {
       const { data, error } = await supabase.from('images').select('*').eq('category', label);
-      
       if (!error && data) {
         const potentialImages = data.filter(img => img && img.url && typeof img.url === 'string');
         const validImages = (await Promise.all(
@@ -150,7 +155,6 @@ export default function DarkroomCanvas() {
             return exists ? img : null;
           })
         )).filter(Boolean);
-
         setImages(validImages);
       }
     }
@@ -241,18 +245,17 @@ export default function DarkroomCanvas() {
             onClick={handleBackAction}
           />
           <AnimatePresence>
-          {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
-            <motion.div 
-              initial={{ opacity: 0, x: -10, y: "-50%" }} 
-              animate={{ opacity: 1, x: 0, y: "-50%" }} 
-              exit={{ opacity: 0, x: -10, y: "-50%" }}
-              // Hier wurde die Schriftgröße auf 15px und Font-Bold erhöht:
-              className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[13px] md:text-[15px] font-bold tracking-[0.3em] whitespace-nowrap"
-              style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)' }}>
-              ← ZURÜCK
-            </motion.div>
-          )}
-           </AnimatePresence>
+            {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
+              <motion.div 
+                initial={{ opacity: 0, x: -10, y: "-50%" }} 
+                animate={{ opacity: 1, x: 0, y: "-50%" }} 
+                exit={{ opacity: 0, x: -10, y: "-50%" }}
+                className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[13px] md:text-[15px] font-bold tracking-[0.3em] whitespace-nowrap"
+                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)' }}>
+                ← ZURÜCK
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <motion.button initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
             whileTap={{ scale: 0.75, rotate: 45 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -291,21 +294,28 @@ export default function DarkroomCanvas() {
           <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
             SAY HELLO
           </h1>
-          <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none">
+          <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24">
             <a href="mailto:breuermalte@icloud.com" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText("breuermalte@icloud.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); playClickSound(); }} 
-               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 hover:[text-shadow:0_0_20px_rgba(220,38,38,0.6)]">
+              className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
             </a>
             <a href="https://www.instagram.com/breuermalte" target="_blank" rel="noopener noreferrer" onClick={playClickSound}
-               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 hover:[text-shadow:0_0_20px_rgba(220,38,38,0.6)]">
+              className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">
               INSTAGRAM
             </a>
+          </div>
+          <div className="absolute bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
+            <div className="flex gap-8">
+              <Link href="/impressum?from=kontakt" className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Impressum</Link>
+              <Link href="/datenschutz?from=kontakt" className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Datenschutz</Link>
+            </div>
+            <p className="text-[11px] font-mono text-zinc-700 tracking-[0.3em] uppercase">© 2026 MALTE BREUER — ALL RIGHTS RESERVED</p>
           </div>
         </div>
       ) : (
         <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
-            <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center">
+            <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
               <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
                 {currentCategory}
               </h1>
@@ -319,19 +329,19 @@ export default function DarkroomCanvas() {
           </div>
         </div>
       )}
-
       <AnimatePresence>
         {selectedImage && (
-          <Lightbox 
-            src={selectedImage} 
-            exif={images.find(i => i.url === selectedImage)} 
-            onClose={() => {
-              setSelectedImage(null);
-              playClickSound();
-            }} 
-          />
+          <Lightbox src={selectedImage} exif={images.find(i => i.url === selectedImage)} onClose={() => { setSelectedImage(null); playClickSound(); }} />
         )}
       </AnimatePresence>
     </main>
+  );
+}
+
+export default function DarkroomCanvas() {
+  return (
+    <Suspense>
+      <DarkroomContent />
+    </Suspense>
   );
 }
