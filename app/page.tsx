@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import ChemistryTimer from '@/components/ChemistryTimer';
 import DevelopingImage from '@/components/DevelopingImage';
+import Lightbox from '@/components/Lightbox';
 
 const MENU = [
   { id: "events", label: "EVENTS" },
@@ -19,17 +20,17 @@ let bufferHeight = 0;
 
 export default function DarkroomCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null); // Ref für horizontales Scrollen
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [images, setImages] = useState<{ url: string }[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const [copied, setCopied] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
 
-  // Horizontales Scrollen mit Mausrad auf Desktop
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (el && !isMobile) {
@@ -37,7 +38,7 @@ export default function DarkroomCanvas() {
         if (e.deltaY === 0) return;
         e.preventDefault();
         el.scrollTo({
-          left: el.scrollLeft + e.deltaY * 3, // Multiplikator für Geschwindigkeit
+          left: el.scrollLeft + e.deltaY * 3.5,
           behavior: 'smooth'
         });
       };
@@ -54,7 +55,6 @@ export default function DarkroomCanvas() {
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
-    
     let rafId: number;
     
     const updatePosition = (x: number, y: number) => {
@@ -105,7 +105,6 @@ export default function DarkroomCanvas() {
     
     const init = () => {
       if (!ctx) return; 
-
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       if (globalCanvasBuffer && bufferWidth === canvas.width && bufferHeight === canvas.height) {
@@ -126,7 +125,6 @@ export default function DarkroomCanvas() {
 
   const selectCategory = async (label: string) => {
     playClickSound();
-
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
       if (ctx) {
@@ -135,14 +133,11 @@ export default function DarkroomCanvas() {
         bufferHeight = canvasRef.current.height;
       }
     }
-    
     setLoading(true);
-
     if (label !== "KONTAKT") {
       const { data, error } = await supabase.from('images').select('url').eq('category', label);
       if (!error) setImages(data || []);
     }
-    
     setTimeout(() => { setLoading(false); setCurrentCategory(label); }, 1500);
   };
 
@@ -231,7 +226,7 @@ export default function DarkroomCanvas() {
           <div 
             className="pointer-events-none fixed inset-0 z-30 mix-blend-screen" 
             style={{ 
-              background: `radial-gradient(circle ${isMobile ? '200px' : '500px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(200, 0, 0, 0.2) 35%, rgba(100, 0, 0, 0) 70%)` 
+              background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(0,0,0,0) 70%)` 
             }} 
           />
           <div className="absolute bottom-10 w-full text-center z-40 px-6">
@@ -252,43 +247,63 @@ export default function DarkroomCanvas() {
             <a 
               href="mailto:breuermalte@icloud.com" 
               onClick={handleCopy}
-              className="group relative w-full md:w-auto flex justify-center py-4 md:py-0 border border-zinc-800 md:border-none bg-[#0a0a0a] md:bg-transparent text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-400 md:text-zinc-500 hover:text-white hover:border-red-900/60 md:hover:border-none md:hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.15em] md:tracking-[0.2em] uppercase cursor-none"
+              className="group relative w-full md:w-auto flex justify-center py-4 md:py-0 border border-zinc-800 md:border-none bg-[#0a0a0a] md:bg-transparent text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-400 md:text-zinc-500 hover:text-white transition-all tracking-[0.15em] md:tracking-[0.2em] uppercase cursor-none"
             >
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
-              <span className={`hidden md:block absolute -bottom-3 left-0 h-[2px] bg-red-600 transition-all duration-500 ${copied ? 'w-full shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'w-0 group-hover:w-full group-hover:shadow-[0_0_15px_rgba(220,38,38,0.8)]'}`}></span>
+              <span className={`hidden md:block absolute -bottom-3 left-0 h-[2px] bg-red-600 transition-all duration-500 ${copied ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
             </a>
             <a 
               href="https://www.instagram.com/mhlensvisuals/" 
               target="_blank" 
               rel="noreferrer"
-              className="group relative w-full md:w-auto flex justify-center py-4 md:py-0 border border-zinc-800 md:border-none bg-[#0a0a0a] md:bg-transparent text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-400 md:text-zinc-500 hover:text-white hover:border-red-900/60 md:hover:border-none md:hover:[text-shadow:0_0_15px_rgba(255,255,255,0.5)] transition-all tracking-[0.15em] md:tracking-[0.2em] uppercase cursor-none"
+              className="group relative w-full md:w-auto flex justify-center py-4 md:py-0 border border-zinc-800 md:border-none bg-[#0a0a0a] md:bg-transparent text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-400 md:text-zinc-500 hover:text-white transition-all tracking-[0.15em] md:tracking-[0.2em] uppercase cursor-none"
             >
               @instagram
-              <span className="hidden md:block absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full group-hover:shadow-[0_0_15px_rgba(220,38,38,0.8)] transition-all duration-500"></span>
+              <span className="hidden md:block absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full transition-all duration-500"></span>
             </a>
           </div>
         </div>
       ) : (
-        /* HORIZONTALES SCROLLEN FÜR DESKTOP */
+        /* GALERIE ANSICHT: Optimiert für perfekte Zentrierung */
         <div 
           ref={scrollContainerRef}
-          className="px-4 pt-8 pb-32 md:px-32 md:pt-0 h-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row md:items-center hide-scrollbar relative bg-black gap-6"
+          className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black md:px-[10vw]"
         >
-          <div className="flex-shrink-0 mb-8 md:mb-0 md:mr-12">
+          {/* TITEL BEREICH: h-auto sorgt für natürliche Höhe, justify-center für vertikale Mitte */}
+          <div className="flex-shrink-0 py-20 md:py-0 md:mr-[8vw] flex items-center justify-center h-auto md:h-full">
             <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black tracking-tighter leading-none text-white uppercase italic hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
               {currentCategory}
             </h1>
           </div>
-
-          <div className="flex flex-col md:flex-row gap-6 md:h-[65vh]">
+          
+          {/* BILDER LEISTE: h-full und items-center für perfekte vertikale Ausrichtung */}
+          <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-center md:h-full pb-32 md:pb-0">
             {images.map((img, index) => (
-              <div key={index} className="flex-shrink-0 w-full md:w-auto md:h-full">
-                <DevelopingImage src={img.url} />
+              <div 
+                key={index} 
+                className="flex-shrink-0 w-full md:w-auto h-[50vh] md:h-[60vh] flex items-center justify-center cursor-none transition-transform duration-500 hover:scale-[1.02]"
+                onClick={() => {
+                  playClickSound();
+                  setSelectedImage(img.url);
+                }}
+              >
+                <div className="h-full w-auto aspect-auto flex items-center justify-center">
+                  <DevelopingImage src={img.url} />
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {selectedImage && (
+          <Lightbox 
+            src={selectedImage} 
+            onClose={() => setSelectedImage(null)} 
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 }
