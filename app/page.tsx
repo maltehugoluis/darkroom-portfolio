@@ -301,7 +301,7 @@ export default function DarkroomCanvas() {
       ) : (
         <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
           <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
-            <div className="flex-shrink-0 pt-24 pb-12 md:py-0 md:mr-20 flex items-center justify-center">
+            <div className="flex-shrink-0 pt-12 pb-12 md:py-0 md:mr-20 flex items-center justify-center">
               <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
                 {currentCategory}
               </h1>
