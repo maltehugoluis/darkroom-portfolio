@@ -146,7 +146,6 @@ export default function DarkroomCanvas() {
 
       {currentCategory && (
         <>
-          {/* DESKTOP BACK ZONE */}
           <div 
             className="hidden md:block fixed top-0 left-0 w-32 xl:w-48 h-full z-[100] cursor-none"
             onMouseEnter={() => setLeftZoneHovered(true)}
@@ -178,7 +177,6 @@ export default function DarkroomCanvas() {
             )}
           </AnimatePresence>
 
-          {/* MOBILE BACK BUTTON: Floating Focus Ring */}
           <motion.button 
             initial={{ opacity: 0, scale: 0.8, x: '-50%' }}
             animate={{ opacity: 1, scale: 1, x: '-50%' }}
@@ -229,7 +227,7 @@ export default function DarkroomCanvas() {
         </div>
       ) : currentCategory === "KONTAKT" ? (
         
-        <div className="p-4 md:p-16 pt-32 h-full flex flex-col justify-center items-center relative bg-black">
+        <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black">
           <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(2.5rem,8vh,4rem)] tracking-tighter leading-none text-white uppercase italic text-center hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
             SAY HELLO
           </h1>
@@ -259,12 +257,13 @@ export default function DarkroomCanvas() {
 
       ) : (
 
-        <div className="p-4 pt-28 md:p-16 md:pt-32 overflow-y-auto h-full hide-scrollbar relative bg-black">
+        // HIER ANGEPASST: pt-8 auf Mobile anstelle von pt-16
+        <div className="px-4 pt-8 pb-32 md:p-16 md:pt-32 overflow-y-auto h-full hide-scrollbar relative bg-black">
           <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(1.5rem,5vh,4rem)] tracking-tighter leading-none text-white uppercase italic hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
             {currentCategory}
           </h1>
 
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6 max-w-[1600px] mx-auto pb-40">
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6 max-w-[1600px] mx-auto">
             {images.map((img, index) => (
               <div key={index} className="break-inside-avoid">
                 <DevelopingImage src={img.url} />
