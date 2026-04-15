@@ -32,8 +32,12 @@ export default function DarkroomCanvas() {
   const [canvasReady, setCanvasReady] = useState(false);
 
   useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+
     const el = scrollContainerRef.current;
-    if (el && !isMobile) {
+    if (el && window.innerWidth >= 768) {
       const onWheel = (e: WheelEvent) => {
         if (e.deltaY === 0) return;
         e.preventDefault();
@@ -43,9 +47,13 @@ export default function DarkroomCanvas() {
         });
       };
       el.addEventListener('wheel', onWheel);
-      return () => el.removeEventListener('wheel', onWheel);
+      return () => {
+        el.removeEventListener('wheel', onWheel);
+        window.removeEventListener('resize', handleResize);
+      };
     }
-  }, [currentCategory, isMobile]);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentCategory]);
 
   const playClickSound = () => {
     const audio = new Audio('/click.mp3'); 
@@ -54,9 +62,7 @@ export default function DarkroomCanvas() {
   };
 
   useEffect(() => {
-    setIsMobile(window.innerWidth < 768);
     let rafId: number;
-    
     const updatePosition = (x: number, y: number) => {
       document.documentElement.style.setProperty('--x', `${x}px`);
       document.documentElement.style.setProperty('--y', `${y}px`);
@@ -86,13 +92,9 @@ export default function DarkroomCanvas() {
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false }); 
 
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(rafId);
     };
   }, [currentCategory]);
@@ -141,6 +143,15 @@ export default function DarkroomCanvas() {
     setTimeout(() => { setLoading(false); setCurrentCategory(label); }, 1500);
   };
 
+  const handleBackAction = () => {
+    playClickSound();
+    if (selectedImage) {
+      setSelectedImage(null);
+    } else {
+      setCurrentCategory(null);
+    }
+  };
+
   const handleCopy = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault(); 
     navigator.clipboard.writeText("breuermalte@icloud.com"); 
@@ -156,19 +167,14 @@ export default function DarkroomCanvas() {
 
       <div className="custom-cursor" />
 
-      {currentCategory && (
+      {/* NAVIGATION BUTTON (ZURÜCK) */}
+      {(currentCategory || selectedImage) && (
         <>
           <div 
-            className="hidden md:block fixed top-0 left-0 w-32 xl:w-48 h-full z-[100] cursor-none"
+            className="hidden md:block fixed top-0 left-0 w-32 xl:w-48 h-full z-[250] cursor-none"
             onMouseEnter={() => setLeftZoneHovered(true)}
             onMouseLeave={() => setLeftZoneHovered(false)}
-            onClick={() => {
-              playClickSound();
-              setTimeout(() => {
-                setCurrentCategory(null);
-                setLeftZoneHovered(false);
-              }, 250);
-            }}
+            onClick={handleBackAction}
           />
 
           <AnimatePresence>
@@ -177,14 +183,14 @@ export default function DarkroomCanvas() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="fixed pointer-events-none z-[110] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
+                className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
                 style={{ 
                   left: 'calc(var(--x) + 25px)', 
                   top: 'var(--y)', 
                   transform: 'translateY(-50%)' 
                 }}
               >
-                ← ZURÜCK
+                {selectedImage ? '← SCHLIESSEN' : '← ZURÜCK'}
               </motion.div>
             )}
           </AnimatePresence>
@@ -194,13 +200,8 @@ export default function DarkroomCanvas() {
             animate={{ opacity: 1, scale: 1, x: '-50%' }}
             whileTap={{ scale: 0.75, rotate: 45 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            onClick={() => {
-              playClickSound(); 
-              setTimeout(() => {
-                setCurrentCategory(null);
-              }, 250);
-            }} 
-            className="md:hidden fixed bottom-10 left-1/2 z-[100] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center transition-colors duration-300 active:border-red-500 active:bg-red-950/40"
+            onClick={handleBackAction} 
+            className="fixed bottom-10 left-1/2 z-[300] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center transition-colors duration-300 active:border-red-500 active:bg-red-950/40"
           >
             <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
               <span className="text-red-600 font-mono text-lg">←</span>
@@ -229,65 +230,37 @@ export default function DarkroomCanvas() {
               background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(0,0,0,0) 70%)` 
             }} 
           />
-          <div className="absolute bottom-10 w-full text-center z-40 px-6">
-            <motion.p animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity }} className="font-mono text-[12px] md:text-[10px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase">
-              Wische, um das Archiv zu belichten
-            </motion.p>
-          </div>
         </div>
       ) : currentCategory === "KONTAKT" ? (
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black">
-          <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-4 tracking-tighter leading-none text-white uppercase italic text-center hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
+          <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-4 tracking-tighter leading-none text-white uppercase italic text-center transition-all duration-500">
             SAY HELLO
           </h1>
-          <p className="sr-only md:not-sr-only md:text-[10px] text-zinc-600 font-mono tracking-widest uppercase mb-12 text-center w-full max-w-sm px-4">
-            Malte Breuer • Visuals & Photography • Portfolio aus Biberach an der Riss
-          </p>
           <div className="flex flex-col items-center gap-4 md:gap-[clamp(1rem,4vh,2.5rem)] w-full max-w-xs md:max-w-none">
-            <a 
-              href="mailto:breuermalte@icloud.com" 
-              onClick={handleCopy}
-              className="group relative w-full md:w-auto flex justify-center py-4 md:py-0 border border-zinc-800 md:border-none bg-[#0a0a0a] md:bg-transparent text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-400 md:text-zinc-500 hover:text-white transition-all tracking-[0.15em] md:tracking-[0.2em] uppercase cursor-none"
-            >
+            <a href="mailto:breuermalte@icloud.com" onClick={handleCopy} className="text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-500 tracking-[0.2em] uppercase">
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
-              <span className={`hidden md:block absolute -bottom-3 left-0 h-[2px] bg-red-600 transition-all duration-500 ${copied ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-            </a>
-            <a 
-              href="https://www.instagram.com/mhlensvisuals/" 
-              target="_blank" 
-              rel="noreferrer"
-              className="group relative w-full md:w-auto flex justify-center py-4 md:py-0 border border-zinc-800 md:border-none bg-[#0a0a0a] md:bg-transparent text-xs md:text-[clamp(1rem,min(3vw,4vh),25.5px)] font-mono text-zinc-400 md:text-zinc-500 hover:text-white transition-all tracking-[0.15em] md:tracking-[0.2em] uppercase cursor-none"
-            >
-              @instagram
-              <span className="hidden md:block absolute -bottom-3 left-0 w-0 h-[2px] bg-red-600 group-hover:w-full transition-all duration-500"></span>
             </a>
           </div>
         </div>
       ) : (
-        /* GALERIE ANSICHT: Optimiert für perfekte Zentrierung */
         <div 
           ref={scrollContainerRef}
           className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black md:px-[10vw]"
         >
-          {/* TITEL BEREICH: h-auto sorgt für natürliche Höhe, justify-center für vertikale Mitte */}
-          <div className="flex-shrink-0 py-20 md:py-0 md:mr-[8vw] flex items-center justify-center h-auto md:h-full">
-            <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black tracking-tighter leading-none text-white uppercase italic hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
+          <div className="flex-shrink-0 pt-24 pb-12 md:py-0 md:mr-[8vw] flex items-center justify-center">
+            <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black text-white uppercase italic">
               {currentCategory}
             </h1>
           </div>
           
-          {/* BILDER LEISTE: h-full und items-center für perfekte vertikale Ausrichtung */}
-          <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-center md:h-full pb-32 md:pb-0">
+          <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-center justify-center pb-40 md:pb-0 px-6 md:px-0">
             {images.map((img, index) => (
               <div 
                 key={index} 
-                className="flex-shrink-0 w-full md:w-auto h-[50vh] md:h-[60vh] flex items-center justify-center cursor-none transition-transform duration-500 hover:scale-[1.02]"
-                onClick={() => {
-                  playClickSound();
-                  setSelectedImage(img.url);
-                }}
+                className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center"
+                onClick={() => setSelectedImage(img.url)}
               >
-                <div className="h-full w-auto aspect-auto flex items-center justify-center">
+                <div className="w-full md:w-auto md:h-full">
                   <DevelopingImage src={img.url} />
                 </div>
               </div>
