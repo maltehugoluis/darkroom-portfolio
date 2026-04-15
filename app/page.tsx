@@ -54,7 +54,6 @@ export default function DarkroomCanvas() {
     audio.play().catch(() => {});
   };
 
-  // Initialisierung & Autoplay-Workaround für das Brummen
   useEffect(() => {
     ambientAudioRef.current = new Audio('/ambient-hum.mp3');
     if (ambientAudioRef.current) {
@@ -78,7 +77,7 @@ export default function DarkroomCanvas() {
     };
   }, []);
 
-  // --- HOOKS & RESETS ---
+  // --- HOOKS ---
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -86,12 +85,10 @@ export default function DarkroomCanvas() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Reset Hover bei Kategoriewechsel
   useEffect(() => {
     setLeftZoneHovered(false);
   }, [currentCategory]);
 
-  // Scroll Tick Sound
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -106,7 +103,6 @@ export default function DarkroomCanvas() {
     return () => el.removeEventListener('scroll', handleScroll);
   }, [currentCategory]);
 
-  // Desktop Wheel Scroll
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (el && !isMobile && currentCategory) {
@@ -123,7 +119,7 @@ export default function DarkroomCanvas() {
     }
   }, [currentCategory, isMobile]);
 
-  // --- SUPABASE & EXIF ---
+  // --- DATA ---
   const checkAndEnrichExif = async (imgObj: any) => {
     if (imgObj.camera && imgObj.camera !== "Unknown Camera") return imgObj;
     try {
@@ -145,7 +141,6 @@ export default function DarkroomCanvas() {
     }
   };
 
-  // --- NAVIGATION ---
   const selectCategory = async (label: string) => {
     playClickSound();
     playAutofocusSound();
@@ -175,7 +170,7 @@ export default function DarkroomCanvas() {
     }
   };
 
-  // --- CANVAS INTERACTION ---
+  // --- CANVAS & CURSOR ---
   useEffect(() => {
     let rafId: number;
     const updatePosition = (x: number, y: number) => {
@@ -294,20 +289,30 @@ export default function DarkroomCanvas() {
         </div>
       ) : currentCategory === "KONTAKT" ? (
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center">
-          <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-4 text-white uppercase italic">SAY HELLO</h1>
-          <a href="mailto:breuermalte@icloud.com" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText("breuermalte@icloud.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); }} 
-             className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase">
-            {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
-          </a>
+          <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
+            SAY HELLO
+          </h1>
+          <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none">
+            <a href="mailto:breuermalte@icloud.com" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText("breuermalte@icloud.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); playClickSound(); }} 
+               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 hover:[text-shadow:0_0_20px_rgba(220,38,38,0.6)]">
+              {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
+            </a>
+            <a href="https://www.instagram.com/breuermalte" target="_blank" rel="noopener noreferrer" onClick={playClickSound}
+               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 hover:[text-shadow:0_0_20px_rgba(220,38,38,0.6)]">
+              INSTAGRAM
+            </a>
+          </div>
         </div>
       ) : (
         <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black md:px-[10vw]">
           <div className="flex-shrink-0 pt-24 pb-12 md:py-0 md:mr-[8vw] flex items-center justify-center">
-            <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic">{currentCategory}</h1>
+            <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
+              {currentCategory}
+            </h1>
           </div>
           <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-center justify-center pb-40 md:pb-0 px-6 md:px-0">
             {images.map((img, index) => (
-              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center"
+              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02]"
                 onClick={() => { setSelectedImage(img.url); checkAndEnrichExif(img); playClickSound(); }}>
                 <div className="w-full md:w-auto md:h-full"><DevelopingImage src={img.url} /></div>
               </div>
@@ -317,7 +322,16 @@ export default function DarkroomCanvas() {
       )}
 
       <AnimatePresence>
-        {selectedImage && <Lightbox src={selectedImage} exif={images.find(i => i.url === selectedImage)} onClose={() => setSelectedImage(null)} />}
+        {selectedImage && (
+          <Lightbox 
+            src={selectedImage} 
+            exif={images.find(i => i.url === selectedImage)} 
+            onClose={() => {
+              setSelectedImage(null);
+              playClickSound(); // Sound beim Schließen der Lightbox
+            }} 
+          />
+        )}
       </AnimatePresence>
     </main>
   );
