@@ -26,6 +26,7 @@ export default function DarkroomCanvas() {
   const [copied, setCopied] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
+  const [canvasReady, setCanvasReady] = useState(false);
 
   const playClickSound = () => {
     const audio = new Audio('/click.mp3'); 
@@ -97,6 +98,9 @@ export default function DarkroomCanvas() {
         globalCanvasBuffer = null;
       }
       ctx.globalCompositeOperation = 'destination-out';
+      
+      // Verhindert das Aufblitzen des Menüs
+      setCanvasReady(true);
     };
     
     init();
@@ -199,7 +203,7 @@ export default function DarkroomCanvas() {
 
       {!currentCategory ? (
         <div className="relative h-full w-full bg-black touch-none">
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-[clamp(1rem,3vh,3rem)] p-4">
+          <div className={`absolute inset-0 flex flex-col items-center justify-center gap-[clamp(1rem,3vh,3rem)] p-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
             {MENU.map((item) => (
               <button
                 key={item.id}
@@ -228,13 +232,12 @@ export default function DarkroomCanvas() {
       ) : currentCategory === "KONTAKT" ? (
         
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black">
-          <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(2.5rem,8vh,4rem)] tracking-tighter leading-none text-white uppercase italic text-center hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
+          <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-4 tracking-tighter leading-none text-white uppercase italic text-center hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
             SAY HELLO
           </h1>
 
-          {/* Dieser Text ist für normale Nutzer auf Handys unsichtbar (sr-only), wird aber von Google gelesen! */}
-          <p className="sr-only md:not-sr-only md:text-[10px] text-zinc-600 font-mono tracking-widest uppercase mb-8 text-center w-full max-w-sm px-4">
-            Malte Breuer • Visuals & Photography • Fotografie in Biberach an der Riss
+          <p className="sr-only md:not-sr-only md:text-[10px] text-zinc-600 font-mono tracking-widest uppercase mb-12 text-center w-full max-w-sm px-4">
+            Malte Breuer • Visuals & Photography • Portfolio aus Biberach an der Riss
           </p>
 
           <div className="flex flex-col items-center gap-4 md:gap-[clamp(1rem,4vh,2.5rem)] w-full max-w-xs md:max-w-none">
