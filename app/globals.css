@@ -28,12 +28,12 @@ body {
 /* 3. DER PERFORMANTE CUSTOM-CURSOR */
 .custom-cursor {
   position: fixed;
-  width: 12px;
-  height: 12px;
-  background-color: #ef4444; /* Labor-Rot */
-  border-radius: 50%;
-  pointer-events: none; /* Klicks gehen durch den Punkt hindurch */
+  top: 0;
+  left: 0;
+  pointer-events: none;
   z-index: 9999;
+  transform: translate3d(var(--x), var(--y), 0);
+  will-change: transform;
   
   /* Positionierung via CSS-Variablen (High-Speed) */
   left: var(--x, -100px);

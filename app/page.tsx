@@ -35,7 +35,6 @@ export default function DarkroomCanvas() {
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
 
-  // --- AUDIO LOGIK ---
   const playClickSound = () => {
     const audio = new Audio('/click.mp3'); 
     audio.volume = 0.3; 
@@ -77,7 +76,6 @@ export default function DarkroomCanvas() {
     };
   }, []);
 
-  // --- HOOKS ---
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -87,6 +85,9 @@ export default function DarkroomCanvas() {
 
   useEffect(() => {
     setLeftZoneHovered(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = 0;
+    }
   }, [currentCategory]);
 
   useEffect(() => {
@@ -119,7 +120,6 @@ export default function DarkroomCanvas() {
     }
   }, [currentCategory, isMobile]);
 
-  // --- DATA ---
   const checkAndEnrichExif = async (imgObj: any) => {
     if (imgObj.camera && imgObj.camera !== "Unknown Camera") return imgObj;
     try {
@@ -154,9 +154,26 @@ export default function DarkroomCanvas() {
       }
     }
     setLoading(true);
+    
     if (label !== "KONTAKT") {
       const { data, error } = await supabase.from('images').select('*').eq('category', label);
-      if (!error) setImages(data || []);
+      
+      if (!error && data) {
+        const potentialImages = data.filter(img => img && img.url && typeof img.url === 'string');
+        const validImages = (await Promise.all(
+          potentialImages.map(async (img) => {
+            const exists = await new Promise(resolve => {
+              const image = new window.Image();
+              image.onload = () => resolve(true);
+              image.onerror = () => resolve(false);
+              image.src = img.url;
+            });
+            return exists ? img : null;
+          })
+        )).filter(Boolean);
+
+        setImages(validImages);
+      }
     }
     setTimeout(() => { setLoading(false); setCurrentCategory(label); }, 1500);
   };
@@ -170,15 +187,19 @@ export default function DarkroomCanvas() {
     }
   };
 
-  // --- CANVAS & CURSOR ---
   useEffect(() => {
     let rafId: number;
+    let isTicking = false;
+
     const updatePosition = (x: number, y: number) => {
-      document.documentElement.style.setProperty('--x', `${x}px`);
-      document.documentElement.style.setProperty('--y', `${y}px`);
-      if (!currentCategory && canvasRef.current) {
-        rafId = requestAnimationFrame(() => {
-          const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
+      if (isTicking) return;
+      isTicking = true;
+
+      rafId = requestAnimationFrame(() => {
+        document.documentElement.style.setProperty('--x', `${x}px`);
+        document.documentElement.style.setProperty('--y', `${y}px`);
+        if (!currentCategory && canvasRef.current) {
+          const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
           if (ctx) {
             const radius = isMobile ? 45 : 100;
             const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius); 
@@ -189,13 +210,16 @@ export default function DarkroomCanvas() {
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
           }
-        });
-      }
+        }
+        isTicking = false;
+      });
     };
+
     const handleMouseMove = (e: MouseEvent) => updatePosition(e.clientX, e.clientY);
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches[0]) updatePosition(e.touches[0].clientX, e.touches[0].clientY);
     };
+
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false }); 
     return () => {
@@ -235,7 +259,7 @@ export default function DarkroomCanvas() {
         {loading && <ChemistryTimer onComplete={() => {}} />}
       </AnimatePresence>
 
-      <div className="custom-cursor" />
+      {(!isMobile || !currentCategory) && <div className="custom-cursor" />}
 
       {(currentCategory || selectedImage) && (
         <>
@@ -248,8 +272,8 @@ export default function DarkroomCanvas() {
           <AnimatePresence>
             {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
-                className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
-                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)', transform: 'translateY(-50%)' }}>
+                className="fixed top-0 left-0 pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
+                style={{ transform: 'translate3d(calc(var(--x) + 25px), calc(var(--y) - 50%), 0)' }}>
                 ← ZURÜCK
               </motion.div>
             )}
@@ -304,15 +328,15 @@ export default function DarkroomCanvas() {
           </div>
         </div>
       ) : (
-        <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black md:px-[10vw]">
-          <div className="flex-shrink-0 pt-24 pb-12 md:py-0 md:mr-[8vw] flex items-center justify-center">
-            <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
-              {currentCategory}
-            </h1>
-          </div>
-          <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-center justify-center pb-40 md:pb-0 px-6 md:px-0">
+        <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
+          <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
+            <div className="flex-shrink-0 pt-24 pb-12 md:py-0 md:mr-20 flex items-center justify-center">
+              <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
+                {currentCategory}
+              </h1>
+            </div>
             {images.map((img, index) => (
-              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02]"
+              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02] transform-gpu will-change-transform"
                 onClick={() => { setSelectedImage(img.url); checkAndEnrichExif(img); playClickSound(); }}>
                 <div className="w-full md:w-auto md:h-full"><DevelopingImage src={img.url} /></div>
               </div>
@@ -328,7 +352,7 @@ export default function DarkroomCanvas() {
             exif={images.find(i => i.url === selectedImage)} 
             onClose={() => {
               setSelectedImage(null);
-              playClickSound(); // Sound beim Schließen der Lightbox
+              playClickSound();
             }} 
           />
         )}
