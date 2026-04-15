@@ -230,21 +230,24 @@ export default function DarkroomCanvas() {
         {loading && <ChemistryTimer onComplete={() => {}} />}
       </AnimatePresence>
 
-      {(!isMobile || !currentCategory) && <div className="custom-cursor" />}
+      {(!isMobile || !currentCategory) && !leftZoneHovered && <div className="custom-cursor" />}
 
       {(currentCategory || selectedImage) && (
         <>
           <div 
-            className="hidden md:block fixed top-0 left-0 w-24 xl:w-32 h-full z-[250] cursor-none"
+            className="hidden md:block fixed top-0 left-0 w-32 xl:w-48 h-full z-[250] cursor-none"
             onMouseEnter={() => setLeftZoneHovered(true)}
             onMouseLeave={() => setLeftZoneHovered(false)}
             onClick={handleBackAction}
           />
           <AnimatePresence>
             {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
-              <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
-                className="fixed top-0 left-0 pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
-                style={{ transform: 'translate3d(calc(var(--x) + 25px), calc(var(--y) - 50%), 0)' }}>
+              <motion.div 
+                initial={{ opacity: 0, x: -10, y: "-50%" }} 
+                animate={{ opacity: 1, x: 0, y: "-50%" }} 
+                exit={{ opacity: 0, x: -10, y: "-50%" }}
+                className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
+                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)' }}>
                 ← ZURÜCK
               </motion.div>
             )}
@@ -292,7 +295,7 @@ export default function DarkroomCanvas() {
                className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 hover:[text-shadow:0_0_20px_rgba(220,38,38,0.6)]">
               {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
             </a>
-            <a href="https://www.instagram.com/mhlensvisuals" target="_blank" rel="noopener noreferrer" onClick={playClickSound}
+            <a href="https://www.instagram.com/breuermalte" target="_blank" rel="noopener noreferrer" onClick={playClickSound}
                className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 hover:[text-shadow:0_0_20px_rgba(220,38,38,0.6)]">
               INSTAGRAM
             </a>
@@ -300,8 +303,8 @@ export default function DarkroomCanvas() {
         </div>
       ) : (
         <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
-          <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
-            <div className="flex-shrink-0 pt-12 pb-12 md:py-0 md:mr-20 flex items-center justify-center">
+          <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
+            <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center">
               <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
                 {currentCategory}
               </h1>
