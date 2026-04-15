@@ -25,27 +25,30 @@ body {
   overscroll-behavior-y: contain;
 }
 
-/* 3. DER PERFORMANTE CUSTOM-CURSOR */
+/* 3. DER CUSTOM-CURSOR */
 .custom-cursor {
   position: fixed;
-  top: 0;
-  left: 0;
   pointer-events: none;
   z-index: 9999;
-  transform: translate3d(var(--x), var(--y), 0);
-  will-change: transform;
   
-  /* Positionierung via CSS-Variablen (High-Speed) */
+  /* Sichtbarkeit & Form: Das fehlte! */
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444; /* Tailwind red-500 */
+  border-radius: 50%;
+  
+  /* Positionierung via CSS-Variablen */
   left: var(--x, -100px);
   top: var(--y, -100px);
   
+  /* Exakt zentrieren an der Maus-Spitze */
   transform: translate(-50%, -50%);
   
   /* Optischer Glow */
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.9), 
               0 0 30px rgba(239, 68, 68, 0.4);
   
-  /* Hardware-Beschleunigung */
+  /* Hardware-Beschleunigung für flüssiges Bewegen */
   will-change: left, top;
   transition: width 0.2s ease, height 0.2s ease, opacity 0.3s ease;
 }

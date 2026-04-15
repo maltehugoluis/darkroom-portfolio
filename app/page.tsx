@@ -187,19 +187,15 @@ export default function DarkroomCanvas() {
     }
   };
 
+  // --- CURSOR LOGIK (RÜCKGÄNGIG GEMACHT AUF FUNKTIONIERENDEN STAND) ---
   useEffect(() => {
     let rafId: number;
-    let isTicking = false;
-
     const updatePosition = (x: number, y: number) => {
-      if (isTicking) return;
-      isTicking = true;
-
-      rafId = requestAnimationFrame(() => {
-        document.documentElement.style.setProperty('--x', `${x}px`);
-        document.documentElement.style.setProperty('--y', `${y}px`);
-        if (!currentCategory && canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+      document.documentElement.style.setProperty('--x', `${x}px`);
+      document.documentElement.style.setProperty('--y', `${y}px`);
+      if (!currentCategory && canvasRef.current) {
+        rafId = requestAnimationFrame(() => {
+          const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
           if (ctx) {
             const radius = isMobile ? 45 : 100;
             const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius); 
@@ -210,16 +206,13 @@ export default function DarkroomCanvas() {
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
           }
-        }
-        isTicking = false;
-      });
+        });
+      }
     };
-
     const handleMouseMove = (e: MouseEvent) => updatePosition(e.clientX, e.clientY);
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches[0]) updatePosition(e.touches[0].clientX, e.touches[0].clientY);
     };
-
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false }); 
     return () => {
@@ -259,7 +252,8 @@ export default function DarkroomCanvas() {
         {loading && <ChemistryTimer onComplete={() => {}} />}
       </AnimatePresence>
 
-      {(!isMobile || !currentCategory) && <div className="custom-cursor" />}
+      {/* URSPRÜNGLICHER CURSOR */}
+      <div className="custom-cursor" />
 
       {(currentCategory || selectedImage) && (
         <>
@@ -272,8 +266,8 @@ export default function DarkroomCanvas() {
           <AnimatePresence>
             {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
-                className="fixed top-0 left-0 pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
-                style={{ transform: 'translate3d(calc(var(--x) + 25px), calc(var(--y) - 50%), 0)' }}>
+                className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[10px] md:text-xs tracking-widest whitespace-nowrap"
+                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)', transform: 'translateY(-50%)' }}>
                 ← ZURÜCK
               </motion.div>
             )}
@@ -336,7 +330,7 @@ export default function DarkroomCanvas() {
               </h1>
             </div>
             {images.map((img, index) => (
-              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02] transform-gpu will-change-transform"
+              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02]"
                 onClick={() => { setSelectedImage(img.url); checkAndEnrichExif(img); playClickSound(); }}>
                 <div className="w-full md:w-auto md:h-full"><DevelopingImage src={img.url} /></div>
               </div>
