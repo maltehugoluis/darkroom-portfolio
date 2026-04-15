@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import ExifReader from 'exifreader';
 import ChemistryTimer from '@/components/ChemistryTimer';
 import DevelopingImage from '@/components/DevelopingImage';
 import Lightbox from '@/components/Lightbox';
@@ -84,27 +83,6 @@ function DarkroomContent() {
     }
   }, [currentCategory, isMobile]);
 
-  const checkAndEnrichExif = async (imgObj: any) => {
-    if (imgObj.camera && imgObj.camera !== "Unknown Camera") return imgObj;
-    try {
-      const response = await fetch(imgObj.url);
-      const arrayBuffer = await response.arrayBuffer();
-      const tags = ExifReader.load(arrayBuffer);
-      const exifData = {
-        camera: tags['Model']?.description || "Unknown Camera",
-        lens: tags['LensModel']?.description || "Unknown Lens",
-        iso: tags['ISOSpeedRatings']?.description?.toString() || "---",
-        fstop: tags['FNumber']?.description || "---",
-        shutter: tags['ExposureTime']?.description || "---"
-      };
-      await supabase.from('images').update(exifData).eq('url', imgObj.url);
-      setImages(prev => prev.map(img => img.url === imgObj.url ? { ...img, ...exifData } : img));
-      return { ...imgObj, ...exifData };
-    } catch (err) {
-      return imgObj;
-    }
-  };
-
   const selectCategory = async (label: string) => {
     playClickSound();
     playAutofocusSound();
@@ -117,24 +95,19 @@ function DarkroomContent() {
       }
     }
     setLoading(true);
+    
     if (label !== "KONTAKT") {
-      const { data, error } = await supabase.from('images').select('*').eq('category', label);
+      // Lädt URL + deine manuell gepflegten Daten (location, camera_model, year)
+      const { data, error } = await supabase
+        .from('images')
+        .select('*')
+        .eq('category', label);
+        
       if (!error && data) {
-        const potentialImages = data.filter(img => img && img.url && typeof img.url === 'string');
-        const validImages = (await Promise.all(
-          potentialImages.map(async (img) => {
-            const exists = await new Promise(resolve => {
-              const image = new window.Image();
-              image.onload = () => resolve(true);
-              image.onerror = () => resolve(false);
-              image.src = img.url;
-            });
-            return exists ? img : null;
-          })
-        )).filter(Boolean);
-        setImages(validImages);
+        setImages(data);
       }
     }
+    
     setTimeout(() => { setLoading(false); setCurrentCategory(label); }, 1500);
   };
 
@@ -143,7 +116,6 @@ function DarkroomContent() {
     if (selectedImage) {
       setSelectedImage(null);
     } else {
-      // URL bereinigen, damit das Hauptmenü wieder erscheint
       if (currentCategory === "KONTAKT") {
         window.history.replaceState(null, '', '/');
       }
@@ -249,9 +221,7 @@ function DarkroomContent() {
         </>
       )}
 
-      {/* RENDER LOGIK FÜR HAUPTMENÜ / DARKROOM */}
       {!currentCategory ? (
-        // Nur schwarz rendern, wenn wir gerade wirklich von Impressum/Datenschutz laden
         searchParams.get('from') === 'kontakt' && currentCategory === null ? (
           <div className="h-screen w-screen bg-black" />
         ) : (
@@ -294,29 +264,14 @@ function DarkroomContent() {
 
           <div className="absolute bottom-40 md:bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
             <div className="flex gap-8">
-              <Link 
-                href="/impressum?from=kontakt" 
-                onClick={playClickSound}
-                className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors"
-              >
-                Impressum
-              </Link>
-              <Link 
-                href="/datenschutz?from=kontakt" 
-                onClick={playClickSound}
-                className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors"
-              >
-                Datenschutz
-              </Link>
+              <Link href="/impressum?from=kontakt" onClick={playClickSound} className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Impressum</Link>
+              <Link href="/datenschutz?from=kontakt" onClick={playClickSound} className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Datenschutz</Link>
             </div>
             <p className="text-[11px] font-mono text-zinc-700 tracking-[0.3em] uppercase">© 2026 MALTE BREUER — ALL RIGHTS RESERVED</p>
           </div>
         </div>
       ) : (
-        <div 
-          ref={scrollContainerRef} 
-          className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black"
-        >
+        <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
             <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
               <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
@@ -325,7 +280,7 @@ function DarkroomContent() {
             </div>
             {images.map((img, index) => (
               <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02]"
-                onClick={() => { setSelectedImage(img.url); checkAndEnrichExif(img); playClickSound(); }}>
+                onClick={() => { setSelectedImage(img.url); playClickSound(); }}>
                 <div className="w-full md:w-auto md:h-full"><DevelopingImage src={img.url} /></div>
               </div>
             ))}
@@ -334,7 +289,11 @@ function DarkroomContent() {
       )}
       <AnimatePresence>
         {selectedImage && (
-          <Lightbox src={selectedImage} exif={images.find(i => i.url === selectedImage)} onClose={() => { setSelectedImage(null); playClickSound(); }} />
+          <Lightbox 
+            src={selectedImage} 
+            imageData={images.find(i => i.url === selectedImage)} 
+            onClose={() => { setSelectedImage(null); playClickSound(); }} 
+          />
         )}
       </AnimatePresence>
     </main>
