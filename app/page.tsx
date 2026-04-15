@@ -249,7 +249,6 @@ export default function DarkroomCanvas() {
               <button
                 key={item.id}
                 onClick={() => selectCategory(item.label)}
-                // HIER GEÄNDERT: active: Klassen für Mobile Glow hinzugefügt
                 className="text-[clamp(3.5rem,10vw,6.5rem)] font-black text-white tracking-tighter leading-none 
                            hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] 
                            active:text-red-600 active:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]
