@@ -232,6 +232,11 @@ export default function DarkroomCanvas() {
             SAY HELLO
           </h1>
 
+          {/* Dieser Text ist für normale Nutzer auf Handys unsichtbar (sr-only), wird aber von Google gelesen! */}
+          <p className="sr-only md:not-sr-only md:text-[10px] text-zinc-600 font-mono tracking-widest uppercase mb-8 text-center w-full max-w-sm px-4">
+            Malte Breuer • Visuals & Photography • Fotografie in Biberach an der Riss
+          </p>
+
           <div className="flex flex-col items-center gap-4 md:gap-[clamp(1rem,4vh,2.5rem)] w-full max-w-xs md:max-w-none">
             <a 
               href="mailto:breuermalte@icloud.com" 
@@ -257,7 +262,6 @@ export default function DarkroomCanvas() {
 
       ) : (
 
-        // HIER ANGEPASST: pt-8 auf Mobile anstelle von pt-16
         <div className="px-4 pt-8 pb-32 md:p-16 md:pt-32 overflow-y-auto h-full hide-scrollbar relative bg-black">
           <h1 className="text-[clamp(3.5rem,min(10vw,14vh),6.75rem)] font-black mb-[clamp(1.5rem,5vh,4rem)] tracking-tighter leading-none text-white uppercase italic hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] transition-all duration-500">
             {currentCategory}
