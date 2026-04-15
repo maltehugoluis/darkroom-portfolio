@@ -187,7 +187,6 @@ export default function DarkroomCanvas() {
     }
   };
 
-  // --- CURSOR LOGIK (RÜCKGÄNGIG GEMACHT AUF FUNKTIONIERENDEN STAND) ---
   useEffect(() => {
     let rafId: number;
     const updatePosition = (x: number, y: number) => {
@@ -252,8 +251,8 @@ export default function DarkroomCanvas() {
         {loading && <ChemistryTimer onComplete={() => {}} />}
       </AnimatePresence>
 
-      {/* URSPRÜNGLICHER CURSOR */}
-      <div className="custom-cursor" />
+      {/* DIE NEUE CURSOR-LOGIK: Blendet den Cursor auf Mobile in der Galerie aus */}
+      {(!isMobile || !currentCategory) && <div className="custom-cursor" />}
 
       {(currentCategory || selectedImage) && (
         <>
