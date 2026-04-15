@@ -143,6 +143,10 @@ function DarkroomContent() {
     if (selectedImage) {
       setSelectedImage(null);
     } else {
+      // FIX: URL bereinigen, damit das Hauptmenü wieder erscheint
+      if (currentCategory === "KONTAKT") {
+        window.history.replaceState(null, '', '/');
+      }
       setCurrentCategory(null);
     }
   };
@@ -247,8 +251,8 @@ function DarkroomContent() {
 
       {/* RENDER LOGIK FÜR HAUPTMENÜ / DARKROOM */}
       {!currentCategory ? (
-        // Verhindert das Rendern des Lichtkegels bei Rückkehr von Kontakt
-        searchParams.get('from') === 'kontakt' ? (
+        // FIX: Nur schwarz rendern, wenn wir gerade wirklich von Impressum laden
+        searchParams.get('from') === 'kontakt' && currentCategory === null ? (
           <div className="h-screen w-screen bg-black" />
         ) : (
           <div className="relative h-full w-full bg-black touch-none">
@@ -274,7 +278,7 @@ function DarkroomContent() {
         )
       ) : currentCategory === "KONTAKT" ? (
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center">
-          <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
+          <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">
             SAY HELLO
           </h1>
           <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
