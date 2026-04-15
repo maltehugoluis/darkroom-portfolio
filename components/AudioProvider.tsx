@@ -5,7 +5,6 @@ export default function AudioProvider() {
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Audio nur einmal initialisieren
     if (!ambientAudioRef.current) {
       ambientAudioRef.current = new Audio("/ambient-hum.mp3");
       ambientAudioRef.current.loop = true;
@@ -21,8 +20,26 @@ export default function AudioProvider() {
     window.addEventListener("click", startAmbient);
     window.addEventListener("touchstart", startAmbient);
 
-    // Kein pause() hier – so läuft der Sound über alle Seiten hinweg weiter
+    // FIX: Sound stoppen, wenn die App in den Hintergrund geht (Handy aus/Tab gewechselt)
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        ambientAudioRef.current?.pause();
+      } else {
+        // Nur wieder abspielen, wenn er vorher schon lief (vom User gestartet wurde)
+        if (ambientAudioRef.current && ambientAudioRef.current.readyState >= 2) {
+            ambientAudioRef.current.play().catch(() => {});
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("click", startAmbient);
+      window.removeEventListener("touchstart", startAmbient);
+    };
   }, []);
 
-  return null; // Diese Komponente rendert nichts Sichtbares
+  return null;
 }
