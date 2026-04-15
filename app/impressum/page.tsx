@@ -16,7 +16,15 @@ export default function Impressum() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const handleBack = () => router.push('/?from=kontakt');
+  const handleBack = () => {
+    // Sound abspielen
+    const audio = new Audio('/click.mp3');
+    audio.volume = 0.3;
+    audio.play().catch(() => {});
+
+    // Navigation zurück zur Kontakt-Sektion
+    router.push('/?from=kontakt');
+  };
 
   return (
     <main 
@@ -27,19 +35,31 @@ export default function Impressum() {
     >
       <style>{`.custom-cursor { opacity: 0 !important; }`}</style>
       
+      {/* Desktop Morph-Cursor mit flüssigerer Animation */}
       <AnimatePresence>
         {isHovering && (
-          <div className="hidden md:block fixed top-0 left-0 pointer-events-none z-[600]" style={{ transform: 'translate3d(var(--x), var(--y), 0) translate(-50%, -50%)' }}>
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-              className="text-red-600 font-mono text-[13px] md:text-[15px] font-bold tracking-[0.3em] whitespace-nowrap">
+          <div 
+            className="hidden md:block fixed top-0 left-0 pointer-events-none z-[600]" 
+            style={{ transform: 'translate3d(var(--x), var(--y), 0) translate(-50%, -50%)' }}
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.5, filter: "blur(4px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 0.5, filter: "blur(4px)" }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="text-red-600 font-mono text-[13px] md:text-[15px] font-bold tracking-[0.3em] whitespace-nowrap"
+            >
               ← ZURÜCK
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
+      {/* Mobiler Zurück-Button mit haptischem Feedback */}
       <motion.button 
-        initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
+        initial={{ opacity: 0, scale: 0.8, x: '-50%' }} 
+        animate={{ opacity: 1, scale: 1, x: '-50%' }}
+        whileTap={{ scale: 0.85 }}
         onClick={(e) => { e.stopPropagation(); handleBack(); }}
         className="md:hidden fixed bottom-10 left-1/2 z-[300] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center"
       >
@@ -49,13 +69,27 @@ export default function Impressum() {
       </motion.button>
 
       <div className="relative z-10 max-w-2xl space-y-12 pointer-events-none pb-40 md:pb-0">
-        <h1 className="text-white text-3xl font-black italic tracking-tighter uppercase mb-16">Impressum</h1>
+        <motion.h1 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-white text-3xl font-black italic tracking-tighter uppercase mb-16"
+        >
+          Impressum
+        </motion.h1>
+        
         <section className="space-y-4 font-mono">
           <h2 className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase">Angaben gemäß § 5 TMG</h2>
-          <p className="text-sm leading-relaxed text-zinc-300">Malte Breuer<br />[STRASSE]<br />[PLZ STADT]</p>
+          <p className="text-sm leading-relaxed text-zinc-300">
+            Malte Breuer<br />
+            [DEINE STRASSE]<br />
+            [DEINE PLZ & STADT]
+          </p>
         </section>
+
         <section className="space-y-4 pt-12 border-t border-zinc-900 font-mono">
-          <p className="text-[10px] leading-relaxed text-zinc-700 italic">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV: Malte Breuer</p>
+          <p className="text-[10px] leading-relaxed text-zinc-700 italic">
+            Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV: Malte Breuer
+          </p>
         </section>
       </div>
     </main>
