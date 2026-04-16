@@ -37,7 +37,8 @@ export default function Datenschutz() {
         }
       `}</style>
 
-      <div className="custom-cursor" />
+      <div className="custom-cursor hidden md:block" />
+
       
       <AnimatePresence>
         {isHoveringBackground && (

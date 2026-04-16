@@ -39,7 +39,7 @@ export default function Impressum() {
       `}</style>
 
       {/* DER ORIGINALE ROTE CURSOR (Punkt) */}
-      <div className="custom-cursor" />
+      <div className="custom-cursor hidden md:block" />
       
       {/* DER "ZURÜCK" TEXT (Erscheint nur auf dem Hintergrund) */}
       <AnimatePresence>
