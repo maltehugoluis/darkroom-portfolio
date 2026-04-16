@@ -34,13 +34,31 @@ function DarkroomContent() {
   const [isMobile, setIsMobile] = useState(false);
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
+  
+  const stateDepth = useRef(0);
 
   useEffect(() => {
     const from = searchParams.get('from');
     if (from === 'kontakt') {
       setCurrentCategory('KONTAKT');
+      window.history.replaceState(null, '', '/');
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (stateDepth.current > 0) {
+        stateDepth.current -= 1;
+      }
+      if (selectedImage) {
+        setSelectedImage(null);
+      } else if (currentCategory) {
+        setCurrentCategory(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentCategory, selectedImage]);
 
   const playClickSound = () => {
     const audio = new Audio('/click.mp3'); 
@@ -105,18 +123,25 @@ function DarkroomContent() {
       }
     }
     
-    setTimeout(() => { setLoading(false); setCurrentCategory(label); }, 1500);
+    setTimeout(() => { 
+      setLoading(false); 
+      setCurrentCategory(label); 
+      stateDepth.current += 1;
+      window.history.pushState({ category: label }, '', '/');
+    }, 1500);
   };
 
   const handleBackAction = () => {
     playClickSound();
-    if (selectedImage) {
-      setSelectedImage(null);
+    if (stateDepth.current > 0) {
+      window.history.back();
     } else {
-      if (currentCategory === "KONTAKT") {
+      if (selectedImage) {
+        setSelectedImage(null);
+      } else {
+        setCurrentCategory(null);
         window.history.replaceState(null, '', '/');
       }
-      setCurrentCategory(null);
     }
   };
 
@@ -233,7 +258,7 @@ function DarkroomContent() {
             <div className={`relative z-10 flex-1 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
                 <button key={item.id} onClick={() => selectCategory(item.label)}
-                  className="text-[clamp(2.5rem,min(13vw,12vh),6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
+                  className="text-[clamp(4.5rem,min(15vw,12vh),6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
                   {item.label}
                 </button>
               ))}
@@ -287,7 +312,12 @@ function DarkroomContent() {
             </div>
             {images.map((img, index) => (
               <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02]"
-                onClick={() => { setSelectedImage(img.url); playClickSound(); }}>
+                onClick={() => { 
+                  setSelectedImage(img.url); 
+                  playClickSound(); 
+                  stateDepth.current += 1;
+                  window.history.pushState({ image: img.url }, '', '/');
+                }}>
                 <div className="w-full md:w-auto md:h-full"><DevelopingImage src={img.url} /></div>
               </div>
             ))}
@@ -299,7 +329,7 @@ function DarkroomContent() {
           <Lightbox 
             src={selectedImage} 
             imageData={images.find(i => i.url === selectedImage)} 
-            onClose={() => { setSelectedImage(null); playClickSound(); }} 
+            onClose={handleBackAction} 
           />
         )}
       </AnimatePresence>
