@@ -207,12 +207,20 @@ function DarkroomContent() {
             )}
           </AnimatePresence>
 
-          <motion.button initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
-            whileTap={{ scale: 0.75, rotate: 45 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          <motion.button 
+            initial={{ opacity: 0, scale: 0.8, x: '-50%' }} 
+            animate={{ opacity: 1, scale: 1, x: '-50%' }}
+            whileTap={{ scale: 0.75, rotate: 45 }} 
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
             onClick={handleBackAction} 
-            className="md:hidden fixed bottom-10 left-1/2 z-[300] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center">
+            /* HIER GEÄNDERT: z-[600] damit er immer über der Lightbox (z-500) schwebt */
+            className="md:hidden fixed bottom-10 left-1/2 z-[600] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center"
+          >
             <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
-              <span className="text-red-600 font-mono text-lg">←</span>
+              {/* HIER GEÄNDERT: Zeigt ein "✕" wenn ein Bild offen ist, sonst den Pfeil "←" */}
+              <span className="text-red-600 font-mono text-lg">
+                {selectedImage ? "✕" : "←"}
+              </span>
             </div>
           </motion.button>
         </>
