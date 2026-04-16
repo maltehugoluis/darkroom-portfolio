@@ -121,7 +121,6 @@ function DarkroomContent() {
 
   // ANGEPASST: Speichert den Canvas-Stand beim Klick auf eine Kategorie
   const selectCategory = async (label: string) => {
-    playClickSound();
     playAutofocusSound();
 
     // Backup des aktuellen Canvas-Stands machen
