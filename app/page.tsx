@@ -213,11 +213,9 @@ function DarkroomContent() {
             whileTap={{ scale: 0.75, rotate: 45 }} 
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             onClick={handleBackAction} 
-            /* HIER GEÄNDERT: z-[600] damit er immer über der Lightbox (z-500) schwebt */
             className="md:hidden fixed bottom-10 left-1/2 z-[600] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center"
           >
             <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
-              {/* HIER GEÄNDERT: Zeigt ein "✕" wenn ein Bild offen ist, sonst den Pfeil "←" */}
               <span className="text-red-600 font-mono text-lg">
                 {selectedImage ? "✕" : "←"}
               </span>
@@ -232,7 +230,6 @@ function DarkroomContent() {
         ) : (
           <div className="relative h-full w-full bg-black touch-none flex flex-col">
             
-            {/* MENÜ: z-10 (bleibt unter dem schwarzen Canvas versteckt) */}
             <div className={`relative z-10 flex-1 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
                 <button key={item.id} onClick={() => selectCategory(item.label)}
@@ -242,7 +239,6 @@ function DarkroomContent() {
               ))}
             </div>
             
-            {/* INFOTEXT: z-[40] (schwebt jetzt ÜBER dem schwarzen Canvas, immer sichtbar) */}
             <div className="relative z-[40] h-24 shrink-0 flex items-center justify-center px-6 pointer-events-none pb-4 md:pb-8">
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }} 
                 className="font-mono text-[12px] md:text-[11px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase text-center w-full drop-shadow-md">
@@ -250,10 +246,8 @@ function DarkroomContent() {
               </motion.p>
             </div>
             
-            {/* CANVAS: z-20 (verdeckt das Menü auf z-10, aber nicht den Text auf z-[40]) */}
             <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
             
-            {/* ROTES LICHT: z-30 */}
             <div className="pointer-events-none fixed inset-0 z-30 mix-blend-screen" 
               style={{ background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(0,0,0,0) 70%)` }} 
             />
@@ -285,7 +279,7 @@ function DarkroomContent() {
         </div>
       ) : (
         <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
-          <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
+          <div className="w-full md:w-auto flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
             <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
               <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
                 {currentCategory}
