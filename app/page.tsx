@@ -35,7 +35,6 @@ function DarkroomContent() {
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
 
-  // Sofortiges Umschalten bei Rückkehr von Impressum/Datenschutz
   useEffect(() => {
     const from = searchParams.get('from');
     if (from === 'kontakt') {
@@ -69,7 +68,6 @@ function DarkroomContent() {
     }
   }, [currentCategory]);
 
-  // Horizontales Scrollen für Desktop (Fix für Performance)
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (el && !isMobile && currentCategory) {
@@ -97,7 +95,6 @@ function DarkroomContent() {
     setLoading(true);
     
     if (label !== "KONTAKT") {
-      // Lädt URL + deine manuell gepflegten Daten (location, camera_model, year)
       const { data, error } = await supabase
         .from('images')
         .select('*')
@@ -225,22 +222,30 @@ function DarkroomContent() {
         searchParams.get('from') === 'kontakt' && currentCategory === null ? (
           <div className="h-screen w-screen bg-black" />
         ) : (
-          <div className="relative h-full w-full bg-black touch-none">
-            <div className={`absolute inset-0 flex flex-col items-center justify-center gap-6 p-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="relative h-full w-full bg-black touch-none flex flex-col">
+            
+            {/* MENÜ: z-10 (bleibt unter dem schwarzen Canvas versteckt) */}
+            <div className={`relative z-10 flex-1 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
                 <button key={item.id} onClick={() => selectCategory(item.label)}
-                  className="text-[clamp(3.5rem,10vw,6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
+                  className="text-[clamp(2.5rem,min(8vw,12vh),6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
                   {item.label}
                 </button>
               ))}
             </div>
-            <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
-            <div className="absolute bottom-10 left-0 w-full text-center z-[40] px-6 pointer-events-none">
+            
+            {/* INFOTEXT: z-[40] (schwebt jetzt ÜBER dem schwarzen Canvas, immer sichtbar) */}
+            <div className="relative z-[40] h-24 shrink-0 flex items-center justify-center px-6 pointer-events-none pb-4 md:pb-8">
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }} 
-                className="font-mono text-[10px] md:text-[9px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase">
+                className="font-mono text-[12px] md:text-[11px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase text-center w-full drop-shadow-md">
                 {isMobile ? "Wische, um das Archiv zu belichten" : "Bewege die Maus, um das Archiv zu belichten"}
               </motion.p>
             </div>
+            
+            {/* CANVAS: z-20 (verdeckt das Menü auf z-10, aber nicht den Text auf z-[40]) */}
+            <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
+            
+            {/* ROTES LICHT: z-30 */}
             <div className="pointer-events-none fixed inset-0 z-30 mix-blend-screen" 
               style={{ background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(0,0,0,0) 70%)` }} 
             />
@@ -248,7 +253,7 @@ function DarkroomContent() {
         )
       ) : currentCategory === "KONTAKT" ? (
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center">
-          <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">
+          <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">
             SAY HELLO
           </h1>
           <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
@@ -274,7 +279,7 @@ function DarkroomContent() {
         <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
             <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
-              <h1 className="text-[clamp(3.5rem,10vw,6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
+              <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
                 {currentCategory}
               </h1>
             </div>
