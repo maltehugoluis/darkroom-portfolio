@@ -2,7 +2,13 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
-export default function DevelopingImage({ src }: { src: string }) {
+// Interface erweitert um isHighPriority
+interface DevelopingImageProps {
+  src: string;
+  isHighPriority?: boolean;
+}
+
+export default function DevelopingImage({ src, isHighPriority = false }: DevelopingImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
@@ -10,6 +16,8 @@ export default function DevelopingImage({ src }: { src: string }) {
       <motion.img
         src={src}
         onLoad={() => setIsLoaded(true)}
+        // Hybrid-Loading: Prio 1 lädt sofort ("eager"), der Rest verzögert ("lazy")
+        loading={isHighPriority ? "eager" : "lazy"}
         initial={{ opacity: 0, filter: "brightness(0) contrast(1.2)" }}
         animate={isLoaded ? { 
           opacity: 1, 
@@ -19,8 +27,6 @@ export default function DevelopingImage({ src }: { src: string }) {
           duration: 2.5, 
           ease: "easeOut" 
         }}
-        // WICHTIG: h-full und w-auto sorgen dafür, dass das Bild skaliert, 
-        // anstatt den Container zu sprengen.
         className="h-full w-auto block object-contain select-none pointer-events-none"
         style={{ 
           transform: 'translateZ(0)',

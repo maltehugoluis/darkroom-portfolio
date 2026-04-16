@@ -47,14 +47,9 @@ function DarkroomContent() {
 
   useEffect(() => {
     const handlePopState = () => {
-      if (stateDepth.current > 0) {
-        stateDepth.current -= 1;
-      }
-      if (selectedImage) {
-        setSelectedImage(null);
-      } else if (currentCategory) {
-        setCurrentCategory(null);
-      }
+      if (stateDepth.current > 0) stateDepth.current -= 1;
+      if (selectedImage) setSelectedImage(null);
+      else if (currentCategory) setCurrentCategory(null);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -81,9 +76,7 @@ function DarkroomContent() {
 
   useEffect(() => {
     setLeftZoneHovered(false);
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollLeft = 0;
-    }
+    if (scrollContainerRef.current) scrollContainerRef.current.scrollLeft = 0;
   }, [currentCategory]);
 
   useEffect(() => {
@@ -99,48 +92,39 @@ function DarkroomContent() {
     }
   }, [currentCategory, isMobile]);
 
+  // FIX: selectCategory ist jetzt extrem leichtgewichtig
   const selectCategory = async (label: string) => {
-        playClickSound();
-        playAutofocusSound();
-        if (canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-          if (ctx) {
-            globalCanvasBuffer = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
-            bufferWidth = canvasRef.current.width;
-            bufferHeight = canvasRef.current.height;
-          }
-        }
-        setLoading(true);
-        
-        if (label !== "KONTAKT") {
-          const { data, error } = await supabase
-            .from('images')
-            .select('*')
-            .eq('category', label)
-            .order('prio', { ascending: true }) // 1 kommt vor 2
-            .order('created_at', { ascending: false }); // Bei gleicher Prio: Neueste zuerst
-            
-          if (!error && data) {
-            setImages(data);
-          }
-        }
-        
-        setTimeout(() => { 
-          setLoading(false); 
-          setCurrentCategory(label); 
-          stateDepth.current += 1;
-          window.history.pushState({ category: label }, '', '/');
-        }, 1500);
-      };
+    playClickSound();
+    playAutofocusSound();
+    
+    setLoading(true);
+
+    // Datenbank-Abfrage parallel starten
+    if (label !== "KONTAKT") {
+      const { data } = await supabase
+        .from('images')
+        .select('*')
+        .eq('category', label)
+        .order('prio', { ascending: true })
+        .order('created_at', { ascending: false });
+      if (data) setImages(data);
+    }
+
+    // Der Timer nutzt die 1.5s sinnvoll
+    setTimeout(() => { 
+      setLoading(false); 
+      setCurrentCategory(label); 
+      stateDepth.current += 1;
+      window.history.pushState({ category: label }, '', '/');
+    }, 1500);
+  };
 
   const handleBackAction = () => {
     playClickSound();
-    if (stateDepth.current > 0) {
-      window.history.back();
-    } else {
-      if (selectedImage) {
-        setSelectedImage(null);
-      } else {
+    if (stateDepth.current > 0) window.history.back();
+    else {
+      if (selectedImage) setSelectedImage(null);
+      else {
         setCurrentCategory(null);
         window.history.replaceState(null, '', '/');
       }
@@ -149,9 +133,12 @@ function DarkroomContent() {
 
   useEffect(() => {
     let rafId: number;
+    let backupTimeout: NodeJS.Timeout;
+
     const updatePosition = (x: number, y: number) => {
       document.documentElement.style.setProperty('--x', `${x}px`);
       document.documentElement.style.setProperty('--y', `${y}px`);
+      
       if (!currentCategory && canvasRef.current) {
         rafId = requestAnimationFrame(() => {
           const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
@@ -164,6 +151,14 @@ function DarkroomContent() {
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
+
+            // FIX: Backup passiert hier im Hintergrund, wenn die Maus kurz stoppt
+            clearTimeout(backupTimeout);
+            backupTimeout = setTimeout(() => {
+              globalCanvasBuffer = ctx.getImageData(0, 0, canvasRef.current!.width, canvasRef.current!.height);
+              bufferWidth = canvasRef.current!.width;
+              bufferHeight = canvasRef.current!.height;
+            }, 500);
           }
         });
       }
@@ -178,6 +173,7 @@ function DarkroomContent() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
       cancelAnimationFrame(rafId);
+      clearTimeout(backupTimeout);
     };
   }, [currentCategory, isMobile]);
 
@@ -215,37 +211,21 @@ function DarkroomContent() {
 
       {(currentCategory || selectedImage) && (
         <>
-          <div 
-            className="hidden md:block fixed top-0 left-0 w-32 xl:w-48 h-full z-[250] cursor-none"
-            onMouseEnter={() => setLeftZoneHovered(true)}
-            onMouseLeave={() => setLeftZoneHovered(false)}
-            onClick={handleBackAction}
-          />
+          <div className="hidden md:block fixed top-0 left-0 w-32 xl:w-48 h-full z-[250] cursor-none"
+            onMouseEnter={() => setLeftZoneHovered(true)} onMouseLeave={() => setLeftZoneHovered(false)}
+            onClick={handleBackAction} />
           <AnimatePresence>
             {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
-              <motion.div 
-                initial={{ opacity: 0, x: -10, y: "-50%" }} 
-                animate={{ opacity: 1, x: 0, y: "-50%" }} 
-                exit={{ opacity: 0, x: -10, y: "-50%" }}
+              <motion.div initial={{ opacity: 0, x: -10, y: "-50%" }} animate={{ opacity: 1, x: 0, y: "-50%" }} exit={{ opacity: 0, x: -10, y: "-50%" }}
                 className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[13px] md:text-[15px] font-bold tracking-[0.3em] whitespace-nowrap"
-                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)' }}>
-                ← ZURÜCK
-              </motion.div>
+                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)' }}>← ZURÜCK</motion.div>
             )}
           </AnimatePresence>
-
-          <motion.button 
-            initial={{ opacity: 0, scale: 0.8, x: '-50%' }} 
-            animate={{ opacity: 1, scale: 1, x: '-50%' }}
-            whileTap={{ scale: 0.75, rotate: 45 }} 
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            onClick={handleBackAction} 
-            className="md:hidden fixed bottom-10 left-1/2 z-[600] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center"
-          >
+          <motion.button initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
+            whileTap={{ scale: 0.75, rotate: 45 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            onClick={handleBackAction} className="md:hidden fixed bottom-10 left-1/2 z-[600] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center">
             <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
-              <span className="text-red-600 font-mono text-lg">
-                {selectedImage ? "✕" : "←"}
-              </span>
+              <span className="text-red-600 font-mono text-lg">{selectedImage ? "✕" : "←"}</span>
             </div>
           </motion.button>
         </>
@@ -256,7 +236,6 @@ function DarkroomContent() {
           <div className="h-screen w-screen bg-black" />
         ) : (
           <div className="relative h-full w-full bg-black touch-none flex flex-col">
-            
             <div className={`relative z-10 flex-1 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
                 <button key={item.id} onClick={() => selectCategory(item.label)}
@@ -265,16 +244,13 @@ function DarkroomContent() {
                 </button>
               ))}
             </div>
-            
             <div className="relative z-[40] h-24 shrink-0 flex items-center justify-center px-6 pointer-events-none pb-4 md:pb-8">
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }} 
                 className="font-mono text-[12px] md:text-[11px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase text-center w-full drop-shadow-md">
                 {isMobile ? "Wische, um das Archiv zu belichten" : "Bewege die Maus, um das Archiv zu belichten"}
               </motion.p>
             </div>
-            
             <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
-            
             <div className="pointer-events-none fixed inset-0 z-30 mix-blend-screen" 
               style={{ background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(0,0,0,0) 70%)` }} 
             />
@@ -282,20 +258,12 @@ function DarkroomContent() {
         )
       ) : currentCategory === "KONTAKT" ? (
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center">
-          <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">
-            SAY HELLO
-          </h1>
+          <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">SAY HELLO</h1>
           <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
             <a href="mailto:breuermalte@icloud.com" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText("breuermalte@icloud.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); playClickSound(); }} 
-              className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">
-              {copied ? "KOPIERT!" : "breuermalte@icloud.com"}
-            </a>
-            <a href="https://www.instagram.com/breuermalte" target="_blank" rel="noopener noreferrer" onClick={playClickSound}
-              className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">
-              INSTAGRAM
-            </a>
+              className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">{copied ? "KOPIERT!" : "breuermalte@icloud.com"}</a>
+            <a href="https://www.instagram.com/breuermalte" target="_blank" rel="noopener noreferrer" onClick={playClickSound} className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">INSTAGRAM</a>
           </div>
-
           <div className="absolute bottom-40 md:bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
             <div className="flex gap-8">
               <Link href="/impressum?from=kontakt" onClick={playClickSound} className="text-[11px] font-mono text-zinc-600 hover:text-red-600 tracking-[0.2em] uppercase transition-colors">Impressum</Link>
@@ -308,41 +276,22 @@ function DarkroomContent() {
         <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
           <div className="w-full md:w-auto flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
             <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
-              <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">
-                {currentCategory}
-              </h1>
+              <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">{currentCategory}</h1>
             </div>
             {images.map((img, index) => (
               <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02]"
-                onClick={() => { 
-                  setSelectedImage(img.url); 
-                  playClickSound(); 
-                  stateDepth.current += 1;
-                  window.history.pushState({ image: img.url }, '', '/');
-                }}>
-                <div className="w-full md:w-auto md:h-full"><DevelopingImage src={img.url} /></div>
+                onClick={() => { setSelectedImage(img.url); playClickSound(); stateDepth.current += 1; window.history.pushState({ image: img.url }, '', '/'); }}>
+                <div className="w-full md:w-auto md:h-full"><DevelopingImage src={img.url} isHighPriority={img.prio === 1 || index <= 1} /></div>
               </div>
             ))}
           </div>
         </div>
       )}
-      <AnimatePresence>
-        {selectedImage && (
-          <Lightbox 
-            src={selectedImage} 
-            imageData={images.find(i => i.url === selectedImage)} 
-            onClose={handleBackAction} 
-          />
-        )}
-      </AnimatePresence>
+      <AnimatePresence>{selectedImage && <Lightbox src={selectedImage} imageData={images.find(i => i.url === selectedImage)} onClose={handleBackAction} />}</AnimatePresence>
     </main>
   );
 }
 
 export default function DarkroomCanvas() {
-  return (
-    <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
-      <DarkroomContent />
-    </Suspense>
-  );
+  return <Suspense fallback={<div className="h-screen w-screen bg-black" />}><DarkroomContent /></Suspense>;
 }
