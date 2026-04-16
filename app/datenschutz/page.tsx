@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 
 export default function Datenschutz() {
   const router = useRouter();
-  const [isHovering, setIsHovering] = useState(false);
+  const [isHoveringBackground, setIsHoveringBackground] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -25,24 +25,30 @@ export default function Datenschutz() {
 
   return (
     <main 
-      className="min-h-screen bg-black text-zinc-400 font-mono p-8 md:p-24 selection:bg-red-600 selection:text-white md:cursor-none overflow-y-auto md:overflow-hidden relative"
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      className="min-h-screen bg-black text-zinc-400 font-mono p-8 md:p-24 selection:bg-red-600 selection:text-white md:cursor-none overflow-y-auto relative"
+      onMouseEnter={() => setIsHoveringBackground(true)}
+      onMouseLeave={() => setIsHoveringBackground(false)}
       onClick={handleBack}
     >
-      <style>{`.custom-cursor { opacity: 0 !important; }`}</style>
+      <style>{`
+        .custom-cursor { 
+          opacity: ${isHoveringBackground ? '0' : '1'} !important; 
+          transition: opacity 0.2s ease;
+        }
+      `}</style>
+
+      <div className="custom-cursor" />
       
       <AnimatePresence>
-        {isHovering && (
+        {isHoveringBackground && (
           <div 
             className="hidden md:block fixed top-0 left-0 pointer-events-none z-[600]" 
             style={{ transform: 'translate3d(var(--x), var(--y), 0) translate(-50%, -50%)' }}
           >
             <motion.div 
-              initial={{ opacity: 0, scale: 0.5, filter: "blur(4px)" }}
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              exit={{ opacity: 0, scale: 0.5, filter: "blur(4px)" }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
               className="text-red-600 font-mono text-[13px] md:text-[15px] font-bold tracking-[0.3em] whitespace-nowrap"
             >
               ← ZURÜCK
@@ -50,6 +56,38 @@ export default function Datenschutz() {
           </div>
         )}
       </AnimatePresence>
+
+      <div 
+        className="relative z-10 max-w-3xl space-y-12 pb-40 pointer-events-auto"
+        onMouseEnter={(e) => { e.stopPropagation(); setIsHoveringBackground(false); }}
+        onMouseLeave={(e) => { e.stopPropagation(); setIsHoveringBackground(true); }}
+        onClick={(e) => e.stopPropagation()} 
+      >
+        <motion.h1 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-white text-3xl font-black italic tracking-tighter uppercase mb-16"
+        >
+          Datenschutz
+        </motion.h1>
+        
+        <section className="space-y-8 text-sm leading-relaxed text-zinc-300">
+          <div className="space-y-2">
+            <h2 className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase">1. Verantwortlicher</h2>
+            <p>Malte Breuer<br />Ehinger-Tor-Straße 10<br />88400 Biberach an der Riß</p>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase">2. Hosting & Technik</h2>
+            <p>Diese Website wird bei <strong>Vercel</strong> gehostet. Bilder werden über <strong>Supabase</strong> bereitgestellt.</p>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase">3. Cookies</h2>
+            <p>Keine Tracking- oder Analyse-Cookies. Rein private Nutzung.</p>
+          </div>
+        </section>
+      </div>
 
       <motion.button 
         initial={{ opacity: 0, scale: 0.8, x: '-50%' }} 
@@ -62,27 +100,6 @@ export default function Datenschutz() {
           <span className="text-red-600 font-mono text-lg">←</span>
         </div>
       </motion.button>
-
-      <div className="relative z-10 max-w-3xl space-y-12 pointer-events-none pb-40 md:pb-0 font-mono">
-        <motion.h1 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-white text-3xl font-black italic tracking-tighter uppercase mb-16"
-        >
-          Datenschutz
-        </motion.h1>
-        
-        <section className="space-y-6 text-sm leading-relaxed text-zinc-300">
-          <div className="space-y-2">
-            <h2 className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase">1. Hosting</h2>
-            <p>Diese Website wird bei Vercel gehostet. Technisch notwendige Logfiles werden verarbeitet.</p>
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-zinc-600 text-[10px] tracking-[0.4em] uppercase">2. Infrastruktur</h2>
-            <p>Bilder werden über Supabase bereitgestellt. Es findet kein aktives Tracking Ihrer Person statt.</p>
-          </div>
-        </section>
-      </div>
     </main>
   );
 }

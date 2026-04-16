@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import ChemistryTimer from '@/components/ChemistryTimer';
-import DevelopingImage from '@/components/DevelopingImage';
 import Lightbox from '@/components/Lightbox';
 
 const MENU = [
@@ -92,14 +91,11 @@ function DarkroomContent() {
     }
   }, [currentCategory, isMobile]);
 
-  // FIX: selectCategory ist jetzt extrem leichtgewichtig
   const selectCategory = async (label: string) => {
     playClickSound();
     playAutofocusSound();
-    
     setLoading(true);
 
-    // Datenbank-Abfrage parallel starten
     if (label !== "KONTAKT") {
       const { data } = await supabase
         .from('images')
@@ -110,7 +106,6 @@ function DarkroomContent() {
       if (data) setImages(data);
     }
 
-    // Der Timer nutzt die 1.5s sinnvoll
     setTimeout(() => { 
       setLoading(false); 
       setCurrentCategory(label); 
@@ -152,12 +147,13 @@ function DarkroomContent() {
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
 
-            // FIX: Backup passiert hier im Hintergrund, wenn die Maus kurz stoppt
             clearTimeout(backupTimeout);
             backupTimeout = setTimeout(() => {
-              globalCanvasBuffer = ctx.getImageData(0, 0, canvasRef.current!.width, canvasRef.current!.height);
-              bufferWidth = canvasRef.current!.width;
-              bufferHeight = canvasRef.current!.height;
+              if (canvasRef.current) {
+                globalCanvasBuffer = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+                bufferWidth = canvasRef.current.width;
+                bufferHeight = canvasRef.current.height;
+              }
             }, 500);
           }
         });
@@ -279,9 +275,17 @@ function DarkroomContent() {
               <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">{currentCategory}</h1>
             </div>
             {images.map((img, index) => (
-              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02]"
+              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02] cursor-pointer"
                 onClick={() => { setSelectedImage(img.url); playClickSound(); stateDepth.current += 1; window.history.pushState({ image: img.url }, '', '/'); }}>
-                <div className="w-full md:w-auto md:h-full"><DevelopingImage src={img.url} isHighPriority={img.prio === 1 || index <= 1} /></div>
+                <div className="w-full md:w-auto md:h-full relative bg-zinc-900 shadow-2xl rounded-lg overflow-hidden">
+                  <img 
+                    src={img.url} 
+                    alt={`Archive ${index}`}
+                    loading={img.prio === 1 || index <= 1 ? "eager" : "lazy"}
+                    className="h-full w-auto block object-contain select-none pointer-events-none transform-gpu rounded-lg"
+                    style={{ willChange: 'transform' }}
+                  />
+                </div>
               </div>
             ))}
           </div>
