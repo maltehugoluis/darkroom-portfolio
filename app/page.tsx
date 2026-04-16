@@ -36,6 +36,36 @@ function DarkroomContent() {
   
   const stateDepth = useRef(0);
 
+  // Hintergrund-Preload für alle Kategorien beim ersten Laden
+  useEffect(() => {
+    const preloadAllCategories = async () => {
+      const targetCategories = MENU.filter(m => m.id !== "kontakt").map(m => m.label);
+      
+      for (const cat of targetCategories) {
+        const { data } = await supabase
+          .from('images')
+          .select('url')
+          .eq('category', cat)
+          .order('prio', { ascending: true })
+          .order('created_at', { ascending: false })
+          .limit(2);
+
+        if (data) {
+          data.forEach(img => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = 'image';
+            link.href = img.url;
+            document.head.appendChild(link);
+          });
+        }
+      }
+    };
+
+    const timer = setTimeout(preloadAllCategories, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     const from = searchParams.get('from');
     if (from === 'kontakt') {
@@ -235,7 +265,7 @@ function DarkroomContent() {
             <div className={`relative z-10 flex-1 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
                 <button key={item.id} onClick={() => selectCategory(item.label)}
-                  className="text-[clamp(3.0rem,min(10vw,12vh),6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
+                  className="text-[clamp(1.8rem,8vw,6rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
                   {item.label}
                 </button>
               ))}
