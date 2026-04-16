@@ -100,36 +100,38 @@ function DarkroomContent() {
   }, [currentCategory, isMobile]);
 
   const selectCategory = async (label: string) => {
-    playClickSound();
-    playAutofocusSound();
-    if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-      if (ctx) {
-        globalCanvasBuffer = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
-        bufferWidth = canvasRef.current.width;
-        bufferHeight = canvasRef.current.height;
-      }
-    }
-    setLoading(true);
-    
-    if (label !== "KONTAKT") {
-      const { data, error } = await supabase
-        .from('images')
-        .select('*')
-        .eq('category', label);
+        playClickSound();
+        playAutofocusSound();
+        if (canvasRef.current) {
+          const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+          if (ctx) {
+            globalCanvasBuffer = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+            bufferWidth = canvasRef.current.width;
+            bufferHeight = canvasRef.current.height;
+          }
+        }
+        setLoading(true);
         
-      if (!error && data) {
-        setImages(data);
-      }
-    }
-    
-    setTimeout(() => { 
-      setLoading(false); 
-      setCurrentCategory(label); 
-      stateDepth.current += 1;
-      window.history.pushState({ category: label }, '', '/');
-    }, 1500);
-  };
+        if (label !== "KONTAKT") {
+          const { data, error } = await supabase
+            .from('images')
+            .select('*')
+            .eq('category', label)
+            .order('prio', { ascending: true }) // 1 kommt vor 2
+            .order('created_at', { ascending: false }); // Bei gleicher Prio: Neueste zuerst
+            
+          if (!error && data) {
+            setImages(data);
+          }
+        }
+        
+        setTimeout(() => { 
+          setLoading(false); 
+          setCurrentCategory(label); 
+          stateDepth.current += 1;
+          window.history.pushState({ category: label }, '', '/');
+        }, 1500);
+      };
 
   const handleBackAction = () => {
     playClickSound();
