@@ -15,6 +15,7 @@ const MENU = [
   { id: "kontakt", label: "KONTAKT" }
 ];
 
+// Globale Buffer außerhalb der Komponente, damit sie beim Navigieren erhalten bleiben
 let globalCanvasBuffer: ImageData | null = null;
 let bufferWidth = 0;
 let bufferHeight = 0;
@@ -36,18 +37,16 @@ function DarkroomContent() {
   
   const stateDepth = useRef(0);
 
-  // Hintergrund-Preload für alle Kategorien beim ersten Laden
+  // Hintergrund-Preload für alle Kategorien
   useEffect(() => {
     const preloadAllCategories = async () => {
       const targetCategories = MENU.filter(m => m.id !== "kontakt").map(m => m.label);
-      
       for (const cat of targetCategories) {
         const { data } = await supabase
           .from('images')
           .select('url')
           .eq('category', cat)
           .order('prio', { ascending: true })
-          .order('created_at', { ascending: false })
           .limit(2);
 
         if (data) {
@@ -61,7 +60,6 @@ function DarkroomContent() {
         }
       }
     };
-
     const timer = setTimeout(preloadAllCategories, 1000);
     return () => clearTimeout(timer);
   }, []);
@@ -121,9 +119,21 @@ function DarkroomContent() {
     }
   }, [currentCategory, isMobile]);
 
+  // ANGEPASST: Speichert den Canvas-Stand beim Klick auf eine Kategorie
   const selectCategory = async (label: string) => {
     playClickSound();
     playAutofocusSound();
+
+    // Backup des aktuellen Canvas-Stands machen
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+      if (ctx) {
+        globalCanvasBuffer = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+        bufferWidth = canvasRef.current.width;
+        bufferHeight = canvasRef.current.height;
+      }
+    }
+
     setLoading(true);
 
     if (label !== "KONTAKT") {
@@ -156,10 +166,9 @@ function DarkroomContent() {
     }
   };
 
+  // Cursor und Canvas-Freikratzen
   useEffect(() => {
     let rafId: number;
-    let backupTimeout: NodeJS.Timeout;
-
     const updatePosition = (x: number, y: number) => {
       document.documentElement.style.setProperty('--x', `${x}px`);
       document.documentElement.style.setProperty('--y', `${y}px`);
@@ -176,15 +185,6 @@ function DarkroomContent() {
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
-
-            clearTimeout(backupTimeout);
-            backupTimeout = setTimeout(() => {
-              if (canvasRef.current) {
-                globalCanvasBuffer = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
-                bufferWidth = canvasRef.current.width;
-                bufferHeight = canvasRef.current.height;
-              }
-            }, 500);
           }
         });
       }
@@ -199,19 +199,22 @@ function DarkroomContent() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
       cancelAnimationFrame(rafId);
-      clearTimeout(backupTimeout);
     };
   }, [currentCategory, isMobile]);
 
+  // Canvas Initialisierung und Wiederherstellung
   useEffect(() => {
     if (currentCategory) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    
     const init = () => {
       if (!ctx) return; 
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      
+      // Stand wiederherstellen, falls vorhanden und Größe passt
       if (globalCanvasBuffer && bufferWidth === canvas.width && bufferHeight === canvas.height) {
         ctx.putImageData(globalCanvasBuffer, 0, 0);
       } else {
@@ -222,6 +225,7 @@ function DarkroomContent() {
       ctx.globalCompositeOperation = 'destination-out';
       setCanvasReady(true);
     };
+
     init();
     window.addEventListener('resize', init);
     return () => window.removeEventListener('resize', init);
