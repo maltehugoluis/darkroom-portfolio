@@ -235,7 +235,7 @@ function DarkroomContent() {
             <div className={`relative z-10 flex-1 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
                 <button key={item.id} onClick={() => selectCategory(item.label)}
-                  className="text-[clamp(4.5rem,min(10vw,12vh),6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
+                  className="text-[clamp(2.5rem,min(10vw,12vh),6.5rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
                   {item.label}
                 </button>
               ))}
