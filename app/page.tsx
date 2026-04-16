@@ -20,6 +20,18 @@ let globalCanvasBuffer: ImageData | null = null;
 let bufferWidth = 0;
 let bufferHeight = 0;
 
+// AUDIO GLOBALS ZUM VORLADEN
+if (typeof window !== 'undefined') {
+  if (!(window as any).clickAudio) {
+    (window as any).clickAudio = new Audio('/click.mp3');
+    (window as any).clickAudio.volume = 0.3;
+  }
+  if (!(window as any).autofocusAudio) {
+    (window as any).autofocusAudio = new Audio('/autofocus.mp3');
+    (window as any).autofocusAudio.volume = 0.4;
+  }
+}
+
 function DarkroomContent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -83,15 +95,19 @@ function DarkroomContent() {
   }, [currentCategory, selectedImage]);
 
   const playClickSound = () => {
-    const audio = new Audio('/click.mp3'); 
-    audio.volume = 0.3; 
-    audio.play().catch(() => {});
+    const audio: HTMLAudioElement | null = (window as any).clickAudio;
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
   };
 
   const playAutofocusSound = () => {
-    const audio = new Audio('/autofocus.mp3');
-    audio.volume = 0.4;
-    audio.play().catch(() => {});
+    const audio: HTMLAudioElement | null = (window as any).autofocusAudio;
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
   };
 
   useEffect(() => {
@@ -109,13 +125,57 @@ function DarkroomContent() {
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (el && !isMobile && currentCategory) {
+      let targetScroll = el.scrollLeft;
+      let isAnimating = false;
+      let animationFrameId: number;
+
+      const updateScroll = () => {
+        const currentScroll = el.scrollLeft;
+        const diff = targetScroll - currentScroll;
+        
+        if (Math.abs(diff) > 1) {
+          el.scrollLeft += diff * 0.25; // Knackigeres Easing für direktes Gefühl ohne Nachziehen
+          animationFrameId = requestAnimationFrame(updateScroll);
+        } else {
+          el.scrollLeft = targetScroll;
+          isAnimating = false;
+        }
+      };
+
       const onWheel = (e: WheelEvent) => {
+        // Horizontales Trackpad-Scrollen absolut nativ verarbeiten lassen!
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+          if (isAnimating) {
+            cancelAnimationFrame(animationFrameId);
+            isAnimating = false;
+          }
+          targetScroll = el.scrollLeft;
+          return;
+        }
+
         if (e.deltaY === 0) return;
         e.preventDefault();
-        el.scrollLeft += e.deltaY * 2.5;
+        
+        if (!isAnimating) targetScroll = el.scrollLeft;
+        
+        // Kein unnatürlicher Multiplikator mehr
+        targetScroll += e.deltaY;
+        
+        // Grenzen dynamisch einhalten
+        const maxScroll = el.scrollWidth - el.clientWidth;
+        targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+        
+        if (!isAnimating) {
+          isAnimating = true;
+          animationFrameId = requestAnimationFrame(updateScroll);
+        }
       };
+
       el.addEventListener('wheel', onWheel, { passive: false });
-      return () => el.removeEventListener('wheel', onWheel);
+      return () => {
+        el.removeEventListener('wheel', onWheel);
+        cancelAnimationFrame(animationFrameId);
+      };
     }
   }, [currentCategory, isMobile]);
 
@@ -155,14 +215,16 @@ function DarkroomContent() {
 
   const handleBackAction = () => {
     playClickSound();
-    if (stateDepth.current > 0) window.history.back();
-    else {
-      if (selectedImage) setSelectedImage(null);
+    setTimeout(() => {
+      if (stateDepth.current > 0) window.history.back();
       else {
-        setCurrentCategory(null);
-        window.history.replaceState(null, '', '/');
+        if (selectedImage) setSelectedImage(null);
+        else {
+          setCurrentCategory(null);
+          window.history.replaceState(null, '', '/');
+        }
       }
-    }
+    }, 150);
   };
 
   // Cursor und Canvas-Freikratzen

@@ -3,6 +3,13 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
+if (typeof window !== 'undefined') {
+  if (!(window as any).clickAudio) {
+    (window as any).clickAudio = new Audio('/click.mp3');
+    (window as any).clickAudio.volume = 0.3;
+  }
+}
+
 export default function Datenschutz() {
   const router = useRouter();
   const [isHoveringBackground, setIsHoveringBackground] = useState(false);
@@ -17,10 +24,12 @@ export default function Datenschutz() {
   }, []);
 
   const handleBack = () => {
-    const audio = new Audio('/click.mp3');
-    audio.volume = 0.3;
-    audio.play().catch(() => {});
-    router.push('/?from=kontakt');
+    const audio: HTMLAudioElement | null = (window as any).clickAudio;
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+    setTimeout(() => router.push('/?from=kontakt'), 150);
   };
 
   return (
