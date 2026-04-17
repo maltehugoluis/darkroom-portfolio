@@ -159,11 +159,7 @@ function DarkroomContent() {
         e.preventDefault();
         
         if (!isAnimating) targetScroll = el.scrollLeft;
-        
-        // Kein unnatürlicher Multiplikator mehr
         targetScroll += e.deltaY;
-        
-        // Grenzen dynamisch einhalten
         const maxScroll = el.scrollWidth - el.clientWidth;
         targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
         
@@ -374,11 +370,11 @@ function DarkroomContent() {
             {images.map((img, index) => (
               <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02] cursor-pointer"
                 onClick={() => { setSelectedImage(img.url); playClickSound(); stateDepth.current += 1; window.history.pushState({ image: img.url }, '', '/'); }}>
-                <div className="w-full md:w-auto md:h-full relative bg-zinc-900 shadow-2xl rounded-lg overflow-hidden">
+                <div className="w-full md:w-auto md:h-full relative shadow-2xl rounded-lg overflow-hidden">
                   <img 
                     src={img.url} 
                     alt={`Archive ${index}`}
-                    loading={img.prio === 1 || index <= 1 ? "eager" : "lazy"}
+                    loading="eager"
                     className="h-full w-auto block object-contain select-none pointer-events-none transform-gpu rounded-lg"
                     style={{ willChange: 'transform' }}
                   />
