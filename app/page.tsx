@@ -337,7 +337,7 @@ function DarkroomContent() {
                 </button>
               ))}
             </div>
-            <div className="relative z-[40] h-24 shrink-0 flex items-center justify-center px-6 pointer-events-none pb-4 md:pb-8">
+            <div className="absolute bottom-0 left-0 w-full z-[40] h-24 flex items-center justify-center px-6 pointer-events-none pb-4 md:pb-8">
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }} 
                 className="font-mono text-[12px] md:text-[11px] text-white tracking-[0.4em] md:tracking-[0.6em] uppercase text-center w-full drop-shadow-md">
                 {isMobile ? "Wische, um das Archiv zu belichten" : "Bewege die Maus, um das Archiv zu belichten"}
