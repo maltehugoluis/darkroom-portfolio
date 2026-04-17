@@ -97,16 +97,18 @@ function DarkroomContent() {
   const playClickSound = () => {
     const audio: HTMLAudioElement | null = (window as any).clickAudio;
     if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
+      const clone = audio.cloneNode() as HTMLAudioElement;
+      clone.volume = audio.volume;
+      clone.play().catch(() => {});
     }
   };
 
   const playAutofocusSound = () => {
     const audio: HTMLAudioElement | null = (window as any).autofocusAudio;
     if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
+      const clone = audio.cloneNode() as HTMLAudioElement;
+      clone.volume = audio.volume;
+      clone.play().catch(() => {});
     }
   };
 

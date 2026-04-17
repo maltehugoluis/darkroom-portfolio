@@ -26,8 +26,9 @@ export default function Datenschutz() {
   const handleBack = () => {
     const audio: HTMLAudioElement | null = (window as any).clickAudio;
     if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
+      const clone = audio.cloneNode() as HTMLAudioElement;
+      clone.volume = audio.volume;
+      clone.play().catch(() => {});
     }
     setTimeout(() => router.push('/?from=kontakt'), 150);
   };
