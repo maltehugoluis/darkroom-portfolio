@@ -368,17 +368,14 @@ function DarkroomContent() {
               <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">{currentCategory}</h1>
             </div>
             {images.map((img, index) => (
-              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center transition-transform duration-500 hover:scale-[1.02] cursor-pointer"
+              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center cursor-pointer group"
                 onClick={() => { setSelectedImage(img.url); playClickSound(); stateDepth.current += 1; window.history.pushState({ image: img.url }, '', '/'); }}>
-                <div className="w-full md:w-auto md:h-full relative shadow-2xl rounded-lg overflow-hidden">
-                  <img 
-                    src={img.url} 
-                    alt={`Archive ${index}`}
-                    loading="eager"
-                    className="h-full w-auto block object-contain select-none pointer-events-none transform-gpu rounded-lg"
-                    style={{ willChange: 'transform' }}
-                  />
-                </div>
+                <img 
+                  src={img.url} 
+                  alt={`Archive ${index}`}
+                  loading="eager"
+                  className="h-full w-auto block object-contain select-none pointer-events-none rounded-lg transition-transform duration-500 group-hover:scale-[1.02]"
+                />
               </div>
             ))}
           </div>
