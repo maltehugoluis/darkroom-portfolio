@@ -413,7 +413,7 @@ function DarkroomContent() {
           <div className={`relative z-10 flex-1 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 py-24 md:py-32 transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
                 <button key={item.id} onClick={() => selectCategory(item.label)}
-                className="text-[clamp(2rem,min(8vw,10vh),6rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
+                className="text-[clamp(2.5rem,min(12vw,10vh),6rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
                   {item.label}
                 </button>
               ))}
@@ -473,7 +473,7 @@ function DarkroomContent() {
               ))}
               
               {/* Zurück zum Anfang Button & Spacer für das Ende des Scroll-Bereichs */}
-              <div className="flex-shrink-0 w-full md:w-auto h-32 md:h-[60vh] flex items-center justify-center md:pr-[15vw]">
+              <div className="flex-shrink-0 w-full md:w-auto h-32 md:h-[60vh] hidden md:flex items-center justify-center md:pr-[15vw]">
                 <button
                   onClick={() => {
                     playClickSound();
