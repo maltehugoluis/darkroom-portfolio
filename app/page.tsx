@@ -35,6 +35,7 @@ if (typeof window !== 'undefined') {
 function DarkroomContent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrubberRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
   const [loading, setLoading] = useState(false);
@@ -46,6 +47,8 @@ function DarkroomContent() {
   const [isMobile, setIsMobile] = useState(false);
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
+  const [markerProgress, setMarkerProgress] = useState<Record<number, number>>({});
+  const [isNegative, setIsNegative] = useState(false);
   
   const stateDepth = useRef(0);
 
@@ -121,8 +124,51 @@ function DarkroomContent() {
 
   useEffect(() => {
     setLeftZoneHovered(false);
+    setIsNegative(false); // Negativ-Modus beim Wechseln der Kategorie immer zurücksetzen
     if (scrollContainerRef.current) scrollContainerRef.current.scrollLeft = 0;
   }, [currentCategory]);
+
+  // Easter Egg: Konami Code Listener
+  useEffect(() => {
+    const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+    let konamiIndex = 0;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === konamiCode[konamiIndex].toLowerCase()) {
+        konamiIndex++;
+        if (konamiIndex === konamiCode.length) {
+          document.body.classList.toggle('easter-egg');
+          playAutofocusSound(); // Akustisches Feedback bei Aktivierung!
+          konamiIndex = 0;
+        }
+      } else {
+        // Bei einem Fehler zurücksetzen
+        konamiIndex = e.key.toLowerCase() === konamiCode[0].toLowerCase() ? 1 : 0;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Negative-Mode via 'N' Taste (Nur auf dem PC)
+  useEffect(() => {
+    const handleNKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'n' && !isMobile && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        setIsNegative(prev => {
+          const audio = (window as any).clickAudio;
+          if (audio) {
+            const clone = audio.cloneNode() as HTMLAudioElement;
+            clone.volume = audio.volume;
+            clone.play().catch(() => {});
+          }
+          return !prev;
+        });
+      }
+    };
+    window.addEventListener('keydown', handleNKey);
+    return () => window.removeEventListener('keydown', handleNKey);
+  }, [isMobile]);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -290,6 +336,45 @@ function DarkroomContent() {
     return () => window.removeEventListener('resize', init);
   }, [currentCategory]);
 
+  // --- Zeitleisten Vorbereitung (Prios extrahieren) ---
+  const seenPrios = new Set();
+  const annotatedImages = images.map(img => {
+    const isFirstOfPrio = img.prio != null && !seenPrios.has(img.prio);
+    if (isFirstOfPrio) seenPrios.add(img.prio);
+    return { ...img, isFirstOfPrio };
+  });
+  const uniquePrios = Array.from(seenPrios).sort((a: any, b: any) => a - b) as number[];
+
+  // Exakte Marker-Positionen der Timeline berechnen
+  useEffect(() => {
+    const calculateMarkerPositions = () => {
+      const container = scrollContainerRef.current;
+      if (!container || isMobile || uniquePrios.length <= 1) return;
+      
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      if (maxScroll <= 0) return;
+
+      const progressMap: Record<number, number> = {};
+      uniquePrios.forEach((prio) => {
+        const el = document.getElementById(`prio-section-${prio}`);
+        if (el) {
+          // Die exakte prozentuale Scroll-Position berechnen, an der das Bild mittig steht
+          const offset = el.offsetLeft - (window.innerWidth / 2) + (el.clientWidth / 2);
+          const progress = Math.max(0, Math.min(offset / maxScroll, 1));
+          progressMap[prio] = progress;
+        }
+      });
+      setMarkerProgress(progressMap);
+    };
+
+    const timer = setTimeout(calculateMarkerPositions, 200);
+    window.addEventListener('resize', calculateMarkerPositions);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', calculateMarkerPositions);
+    };
+  }, [currentCategory, isMobile, uniquePrios.length, images]);
+
   return (
     <main className="h-screen w-screen bg-black overflow-hidden relative selection:bg-red-600 selection:text-white">
       <AnimatePresence>
@@ -340,8 +425,8 @@ function DarkroomContent() {
               </motion.p>
             </div>
             <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
-            <div className="pointer-events-none fixed inset-0 z-30 mix-blend-screen" 
-              style={{ background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), rgba(255, 30, 30, 0.45) 0%, rgba(0,0,0,0) 70%)` }} 
+            <div className="pointer-events-none fixed inset-0 z-30 mix-blend-screen easter-egg-beam" 
+              style={{ color: 'rgba(255, 30, 30, 0.45)', background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), currentColor 0%, rgba(0,0,0,0) 70%)` }} 
             />
           </div>
         )
@@ -362,24 +447,99 @@ function DarkroomContent() {
           </div>
         </div>
       ) : (
-        <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
-          <div className="w-full md:w-auto flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-[15vw]">
-            <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
-              <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">{currentCategory}</h1>
-            </div>
-            {images.map((img, index) => (
-              <div key={index} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center cursor-pointer group"
-                onClick={() => { setSelectedImage(img.url); playClickSound(); stateDepth.current += 1; window.history.pushState({ image: img.url }, '', '/'); }}>
-                <img 
-                  src={img.url} 
-                  alt={`Archive ${index}`}
-                  loading="eager"
-                  className="h-full w-auto block object-contain select-none pointer-events-none rounded-lg transition-transform duration-500 group-hover:scale-[1.02]"
-                />
+        <>
+          <div ref={scrollContainerRef} onScroll={() => {
+            if (scrubberRef.current && scrollContainerRef.current) {
+              const el = scrollContainerRef.current;
+              const maxScroll = el.scrollWidth - el.clientWidth;
+              const progress = maxScroll > 0 ? el.scrollLeft / maxScroll : 0;
+              scrubberRef.current.style.left = `calc(${progress * 100}% - ${progress * 0.75}rem)`;
+            }
+          }} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
+            <div className="w-full md:w-auto flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-0 md:pl-[15vw]">
+              <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
+                <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">{currentCategory}</h1>
               </div>
-            ))}
+              {annotatedImages.map((img, index) => (
+                <div key={index} id={img.isFirstOfPrio ? `prio-section-${img.prio}` : undefined} className="flex-shrink-0 w-full md:w-auto h-auto md:h-[60vh] flex items-center justify-center cursor-pointer group"
+                  onClick={() => { setSelectedImage(img.url); playClickSound(); stateDepth.current += 1; window.history.pushState({ image: img.url }, '', '/'); }}>
+                  <img 
+                    src={img.url} 
+                    alt={`Archive ${index}`}
+                    loading="eager"
+                  className={`h-full w-auto block object-contain select-none pointer-events-none rounded-lg transition-all duration-500 group-hover:scale-[1.02] ${!isMobile && isNegative ? 'invert' : ''}`}
+                  />
+                </div>
+              ))}
+              
+              {/* Zurück zum Anfang Button & Spacer für das Ende des Scroll-Bereichs */}
+              <div className="flex-shrink-0 w-full md:w-auto h-32 md:h-[60vh] flex items-center justify-center md:pr-[15vw]">
+                <button
+                  onClick={() => {
+                    playClickSound();
+                    scrollContainerRef.current?.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
+                  }}
+                  className="group flex flex-col items-center gap-4 text-zinc-600 hover:text-red-600 transition-all duration-500 outline-none"
+                >
+                  <div className="w-16 h-16 rounded-full border border-zinc-800 group-hover:border-red-600 group-hover:shadow-[0_0_15px_rgba(220,38,38,0.5)] flex items-center justify-center transition-all duration-500">
+                    <span className="font-mono text-2xl group-hover:-translate-x-1 transition-transform duration-300">←</span>
+                  </div>
+                  <span className="font-mono text-[10px] tracking-[0.4em] uppercase">Anfang</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+          
+          {/* Negative Switch (Nur PC) */}
+          {!isMobile && currentCategory && currentCategory !== "KONTAKT" && !selectedImage && (
+            <div className="fixed top-8 right-12 z-[150] flex items-center gap-3 opacity-30 hover:opacity-100 transition-opacity duration-500 cursor-pointer group" onClick={() => { setIsNegative(!isNegative); playClickSound(); }}>
+              <span className="font-mono text-[10px] tracking-[0.2em] text-white uppercase select-none transition-colors group-hover:text-red-600">Negative (N)</span>
+              <button
+                className={`w-10 h-5 rounded-full border transition-all duration-500 outline-none flex items-center p-1 ${isNegative ? 'bg-red-600 border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-transparent border-zinc-700 group-hover:border-red-600'}`}
+              >
+                <div className={`w-3 h-3 rounded-full bg-white transition-transform duration-500 ${isNegative ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </div>
+          )}
+
+          {/* Zeitleiste (Timeline) - Nur auf dem PC sichtbar und ab > 1 Prio-Level */}
+          {!isMobile && uniquePrios.length > 1 && (
+            <div className="fixed bottom-12 left-1/2 -translate-x-1/2 w-1/3 max-w-lg z-[150] block opacity-30 hover:opacity-100 transition-opacity duration-500 h-8 group">
+              <div className="absolute top-1/2 left-0 w-full h-[1px] bg-zinc-700 -translate-y-1/2 pointer-events-none z-0" />
+              
+              {/* Beweglicher Punkt (Scrubber) */}
+              <div 
+                ref={scrubberRef}
+                className="absolute top-1/2 w-3 h-3 bg-red-600 rounded-full -translate-y-1/2 shadow-[0_0_15px_rgba(220,38,38,0.8)] pointer-events-none z-20 will-change-[left]"
+                style={{ left: '0%' }}
+              />
+
+              {uniquePrios.map((prio, index) => {
+                // Optischer Fallback beim allerersten Laden (verteilt die Punkte gleichmäßig, bevor sie korrigiert werden)
+                const defaultProgress = uniquePrios.length > 1 ? index / (uniquePrios.length - 1) : 0;
+                const progress = markerProgress[prio] !== undefined ? markerProgress[prio] : defaultProgress;
+                
+                return (
+                  <button
+                    key={prio}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playClickSound();
+                      const el = document.getElementById(`prio-section-${prio}`);
+                      const container = scrollContainerRef.current;
+                      if (el && container) {
+                        const offset = el.offsetLeft - (window.innerWidth / 2) + (el.clientWidth / 2);
+                        container.scrollTo({ left: offset, behavior: 'smooth' });
+                      }
+                    }}
+                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-500 hover:bg-red-600 hover:scale-150 hover:shadow-[0_0_15px_rgba(220,38,38,0.8)] transition-all duration-300 outline-none z-10"
+                    style={{ left: `calc(${progress * 100}% - ${progress * 0.75}rem)` }}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
       <AnimatePresence>{selectedImage && <Lightbox src={selectedImage} imageData={images.find(i => i.url === selectedImage)} onClose={handleBackAction} />}</AnimatePresence>
     </main>
