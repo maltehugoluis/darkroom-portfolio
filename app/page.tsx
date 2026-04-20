@@ -20,6 +20,13 @@ let globalCanvasBuffer: ImageData | null = null;
 let bufferWidth = 0;
 let bufferHeight = 0;
 
+// Zeitstempel für Sound-Debouncing, um doppelte Wiedergaben rigoros zu verhindern
+let lastClickPlayTime = 0;
+let lastAutofocusPlayTime = 0;
+let lastNegativePlayTime = 0;
+let globalMouseX = -100;
+let globalMouseY = -100;
+
 // AUDIO GLOBALS ZUM VORLADEN
 if (typeof window !== 'undefined') {
   if (!(window as any).clickAudio) {
@@ -30,12 +37,19 @@ if (typeof window !== 'undefined') {
     (window as any).autofocusAudio = new Audio('/autofocus.mp3');
     (window as any).autofocusAudio.volume = 0.4;
   }
+  if (!(window as any).negativeAudio) {
+    (window as any).negativeAudio = new Audio('/negative.mp3');
+    (window as any).negativeAudio.volume = 0.4;
+  }
 }
 
 function DarkroomContent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrubberRef = useRef<HTMLDivElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const zurueckRef = useRef<HTMLDivElement>(null);
+  const beamRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
   const [loading, setLoading] = useState(false);
@@ -45,6 +59,7 @@ function DarkroomContent() {
   
   const [copied, setCopied] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isShortScreen, setIsShortScreen] = useState(false);
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
   const [markerProgress, setMarkerProgress] = useState<Record<number, number>>({});
@@ -98,6 +113,10 @@ function DarkroomContent() {
   }, [currentCategory, selectedImage]);
 
   const playClickSound = () => {
+    const now = Date.now();
+    if (now - lastClickPlayTime < 50) return; // 50ms Blockade
+    lastClickPlayTime = now;
+
     const audio: HTMLAudioElement | null = (window as any).clickAudio;
     if (audio) {
       const clone = audio.cloneNode() as HTMLAudioElement;
@@ -107,6 +126,10 @@ function DarkroomContent() {
   };
 
   const playAutofocusSound = () => {
+    const now = Date.now();
+    if (now - lastAutofocusPlayTime < 50) return;
+    lastAutofocusPlayTime = now;
+
     const audio: HTMLAudioElement | null = (window as any).autofocusAudio;
     if (audio) {
       const clone = audio.cloneNode() as HTMLAudioElement;
@@ -115,11 +138,27 @@ function DarkroomContent() {
     }
   };
 
+  const playNegativeSound = () => {
+    const now = Date.now();
+    if (now - lastNegativePlayTime < 100) return; // 100ms Blockade für den Modus-Switch
+    lastNegativePlayTime = now;
+
+    const audio: HTMLAudioElement | null = (window as any).negativeAudio;
+    if (audio) {
+      const clone = audio.cloneNode() as HTMLAudioElement;
+      clone.volume = audio.volume;
+      clone.play().catch(() => {});
+    }
+  };
+
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsShortScreen(window.innerHeight < 600); // Zeitleiste bei geringer Höhe ausblenden
+    };
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
   useEffect(() => {
@@ -150,25 +189,6 @@ function DarkroomContent() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  // Negative-Mode via 'N' Taste (Nur auf dem PC)
-  useEffect(() => {
-    const handleNKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'n' && !isMobile && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-        setIsNegative(prev => {
-          const audio = (window as any).clickAudio;
-          if (audio) {
-            const clone = audio.cloneNode() as HTMLAudioElement;
-            clone.volume = audio.volume;
-            clone.play().catch(() => {});
-          }
-          return !prev;
-        });
-      }
-    };
-    window.addEventListener('keydown', handleNKey);
-    return () => window.removeEventListener('keydown', handleNKey);
-  }, [isMobile]);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -273,24 +293,38 @@ function DarkroomContent() {
 
   // Cursor und Canvas-Freikratzen
   useEffect(() => {
-    let rafId: number;
+    let rafId: number | null = null;
     const updatePosition = (x: number, y: number) => {
-      document.documentElement.style.setProperty('--x', `${x}px`);
-      document.documentElement.style.setProperty('--y', `${y}px`);
+      globalMouseX = x;
+      globalMouseY = y;
       
-      if (!currentCategory && canvasRef.current) {
+      if (rafId === null) {
         rafId = requestAnimationFrame(() => {
-          const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
-          if (ctx) {
-            const radius = isMobile ? 45 : 100;
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius); 
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
+          if (cursorRef.current) {
+            cursorRef.current.style.transform = `translate3d(calc(${globalMouseX}px - 50%), calc(${globalMouseY}px - 50%), 0)`;
           }
+          if (zurueckRef.current) {
+            zurueckRef.current.style.left = `calc(${globalMouseX}px + 25px)`;
+            zurueckRef.current.style.top = `${globalMouseY}px`;
+          }
+          if (beamRef.current) {
+            beamRef.current.style.background = `radial-gradient(circle ${isMobile ? '200px' : '550px'} at ${globalMouseX}px ${globalMouseY}px, currentColor 0%, rgba(0,0,0,0) 70%)`;
+          }
+
+          if (!currentCategory && canvasRef.current) {
+            const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
+            if (ctx) {
+              const radius = isMobile ? 45 : 100;
+              const gradient = ctx.createRadialGradient(globalMouseX, globalMouseY, 0, globalMouseX, globalMouseY, radius); 
+              gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+              gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+              ctx.fillStyle = gradient;
+              ctx.beginPath();
+              ctx.arc(globalMouseX, globalMouseY, radius, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          rafId = null;
         });
       }
     };
@@ -303,7 +337,7 @@ function DarkroomContent() {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
-      cancelAnimationFrame(rafId);
+      if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, [currentCategory, isMobile]);
 
@@ -381,7 +415,7 @@ function DarkroomContent() {
         {loading && <ChemistryTimer onComplete={() => {}} />}
       </AnimatePresence>
 
-      {(!isMobile || !currentCategory) && !leftZoneHovered && <div className="custom-cursor" />}
+      {(!isMobile || !currentCategory) && !leftZoneHovered && <div ref={cursorRef} className="custom-cursor" style={{ transform: `translate3d(calc(${globalMouseX}px - 50%), calc(${globalMouseY}px - 50%), 0)` }} />}
 
       {(currentCategory || selectedImage) && (
         <>
@@ -390,9 +424,9 @@ function DarkroomContent() {
             onClick={handleBackAction} />
           <AnimatePresence>
             {leftZoneHovered && !isMobile && !selectedImage && currentCategory && (
-              <motion.div initial={{ opacity: 0, x: -10, y: "-50%" }} animate={{ opacity: 1, x: 0, y: "-50%" }} exit={{ opacity: 0, x: -10, y: "-50%" }}
+              <motion.div ref={zurueckRef} initial={{ opacity: 0, x: -10, y: "-50%" }} animate={{ opacity: 1, x: 0, y: "-50%" }} exit={{ opacity: 0, x: -10, y: "-50%" }}
                 className="fixed pointer-events-none z-[260] text-red-600 font-mono text-[13px] md:text-[15px] font-bold tracking-[0.3em] whitespace-nowrap"
-                style={{ left: 'calc(var(--x) + 25px)', top: 'var(--y)' }}>← ZURÜCK</motion.div>
+                style={{ left: `calc(${globalMouseX}px + 25px)`, top: `${globalMouseY}px` }}>← ZURÜCK</motion.div>
             )}
           </AnimatePresence>
           <motion.button initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
@@ -426,8 +460,8 @@ function DarkroomContent() {
               </motion.p>
             </div>
             <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
-            <div className="pointer-events-none fixed inset-0 z-30 mix-blend-screen easter-egg-beam" 
-              style={{ color: 'rgba(255, 30, 30, 0.45)', background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at var(--x) var(--y), currentColor 0%, rgba(0,0,0,0) 70%)` }} 
+          <div ref={beamRef} className="pointer-events-none fixed inset-0 z-30 mix-blend-screen easter-egg-beam" 
+            style={{ color: 'rgba(255, 30, 30, 0.45)', background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at ${globalMouseX}px ${globalMouseY}px, currentColor 0%, rgba(0,0,0,0) 70%)` }} 
             />
           </div>
         )
@@ -467,8 +501,9 @@ function DarkroomContent() {
                   <img 
                     src={img.url} 
                     alt={`Archive ${index}`}
-                    loading="eager"
-                  className={`h-full w-auto block object-contain select-none pointer-events-none rounded-lg transition-all duration-500 group-hover:scale-[1.02] ${!isMobile && isNegative ? 'invert' : ''}`}
+                    loading="lazy"
+                    decoding="async"
+                  className={`h-full w-auto block object-contain select-none pointer-events-none rounded-lg transition-[transform,filter] duration-500 group-hover:scale-[1.02] transform-gpu will-change-transform ${!isMobile && isNegative ? 'invert' : ''}`}
                   />
                 </div>
               ))}
@@ -478,7 +513,7 @@ function DarkroomContent() {
                 <button
                   onClick={() => {
                     playClickSound();
-                    scrollContainerRef.current?.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
+                    scrollContainerRef.current?.scrollTo({ left: 0, top: 0, behavior: 'auto' });
                   }}
                   className="group flex flex-col items-center gap-4 text-zinc-600 hover:text-red-600 transition-all duration-500 outline-none"
                 >
@@ -493,8 +528,8 @@ function DarkroomContent() {
           
           {/* Negative Switch (Nur PC) */}
           {!isMobile && currentCategory && currentCategory !== "KONTAKT" && !selectedImage && (
-            <div className="fixed top-8 right-12 z-[150] flex items-center gap-3 opacity-30 hover:opacity-100 transition-opacity duration-500 cursor-pointer group" onClick={() => { setIsNegative(!isNegative); playClickSound(); }}>
-              <span className="font-mono text-[10px] tracking-[0.2em] text-white uppercase select-none transition-colors group-hover:text-red-600">Negative (N)</span>
+            <div className="fixed top-8 right-12 z-[150] flex items-center gap-3 opacity-30 hover:opacity-100 transition-opacity duration-500 cursor-pointer group" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsNegative(!isNegative); playNegativeSound(); }}>
+              <span className="font-mono text-[10px] tracking-[0.2em] text-white uppercase select-none transition-colors group-hover:text-red-600">Negative</span>
               <button
                 className={`w-10 h-5 rounded-full border transition-all duration-500 outline-none flex items-center p-1 ${isNegative ? 'bg-red-600 border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-transparent border-zinc-700 group-hover:border-red-600'}`}
               >
@@ -504,7 +539,7 @@ function DarkroomContent() {
           )}
 
           {/* Zeitleiste (Timeline) - Nur auf dem PC sichtbar und ab > 1 Prio-Level */}
-          {!isMobile && uniquePrios.length > 1 && (
+          {!isMobile && !isShortScreen && uniquePrios.length > 1 && (
             <div className="fixed bottom-12 left-1/2 -translate-x-1/2 w-1/3 max-w-lg z-[150] block opacity-30 hover:opacity-100 transition-opacity duration-500 h-8 group">
               <div className="absolute top-1/2 left-0 w-full h-[1px] bg-zinc-700 -translate-y-1/2 pointer-events-none z-0" />
               
@@ -530,7 +565,7 @@ function DarkroomContent() {
                       const container = scrollContainerRef.current;
                       if (el && container) {
                         const offset = el.offsetLeft - (window.innerWidth / 2) + (el.clientWidth / 2);
-                        container.scrollTo({ left: offset, behavior: 'smooth' });
+                        container.scrollTo({ left: offset, behavior: 'auto' });
                       }
                     }}
                     className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-500 hover:bg-red-600 hover:scale-150 hover:shadow-[0_0_15px_rgba(220,38,38,0.8)] transition-all duration-300 outline-none z-10"

@@ -38,19 +38,28 @@ body {
   border-radius: 50%;
   
   /* Positionierung via CSS-Variablen */
-  left: var(--x, -100px);
-  top: var(--y, -100px);
+  left: 0;
+  top: 0;
   
-  /* Exakt zentrieren an der Maus-Spitze */
-  transform: translate(-50%, -50%);
-  
-  /* Optischer Glow */
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.9), 
-              0 0 30px rgba(239, 68, 68, 0.4);
+  /* Exakt zentrieren an der Maus-Spitze per GPU-Beschleunigung */
+  transform: translate3d(calc(var(--x, -100px) - 50%), calc(var(--y, -100px) - 50%), 0);
   
   /* Hardware-Beschleunigung für flüssiges Bewegen */
-  will-change: left, top;
+  will-change: transform;
   transition: width 0.2s ease, height 0.2s ease, opacity 0.3s ease;
+}
+
+/* Performanterer Glow via Pseudo-Element statt teurem box-shadow */
+.custom-cursor::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400%;
+  height: 400%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.8) 0%, rgba(239, 68, 68, 0) 70%);
+  pointer-events: none;
 }
 
 /* 4. MOBILE OPTIMIERUNGEN (Media Queries) */
@@ -98,78 +107,4 @@ body {
 
 .animate-pulse-slow {
   animation: pulse-slow 3s infinite ease-in-out;
-}
-
-/* 6. EASTER EGG: KONAMI CODE */
-/* Überschreibt die komplette Schriftart auf der Seite auf Schreibmaschine */
-.easter-egg, .easter-egg * {
-  font-family: "Courier New", Courier, monospace !important;
-  letter-spacing: 0.05em !important;
-}
-
-@keyframes easterEggRainbowText {
-  0% { color: #ff0000; text-shadow: 0 0 30px rgba(255,0,0,0.8); }
-  17% { color: #ff8000; text-shadow: 0 0 30px rgba(255,128,0,0.8); }
-  33% { color: #ffff00; text-shadow: 0 0 30px rgba(255,255,0,0.8); }
-  50% { color: #00ff00; text-shadow: 0 0 30px rgba(0,255,0,0.8); }
-  67% { color: #0000ff; text-shadow: 0 0 30px rgba(0,0,255,0.8); }
-  83% { color: #8000ff; text-shadow: 0 0 30px rgba(128,0,255,0.8); }
-  100% { color: #ff0000; text-shadow: 0 0 30px rgba(255,0,0,0.8); }
-}
-
-@keyframes easterEggRainbowBg {
-  0% { background-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.8); }
-  17% { background-color: #ff8000; box-shadow: 0 0 15px rgba(255,128,0,0.8); }
-  33% { background-color: #ffff00; box-shadow: 0 0 15px rgba(255,255,0,0.8); }
-  50% { background-color: #00ff00; box-shadow: 0 0 15px rgba(0,255,0,0.8); }
-  67% { background-color: #0000ff; box-shadow: 0 0 15px rgba(0,0,255,0.8); }
-  83% { background-color: #8000ff; box-shadow: 0 0 15px rgba(128,0,255,0.8); }
-  100% { background-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.8); }
-}
-
-@keyframes easterEggRainbowBorder {
-  0% { border-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.5); }
-  17% { border-color: #ff8000; box-shadow: 0 0 15px rgba(255,128,0,0.5); }
-  33% { border-color: #ffff00; box-shadow: 0 0 15px rgba(255,255,0,0.5); }
-  50% { border-color: #00ff00; box-shadow: 0 0 15px rgba(0,255,0,0.5); }
-  67% { border-color: #0000ff; box-shadow: 0 0 15px rgba(0,0,255,0.5); }
-  83% { border-color: #8000ff; box-shadow: 0 0 15px rgba(128,0,255,0.5); }
-  100% { border-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.5); }
-}
-
-@keyframes easterEggRainbowBeam {
-  0% { color: rgba(255,0,0,0.45); }
-  17% { color: rgba(255,128,0,0.45); }
-  33% { color: rgba(255,255,0,0.45); }
-  50% { color: rgba(0,255,0,0.45); }
-  67% { color: rgba(0,0,255,0.45); }
-  83% { color: rgba(128,0,255,0.45); }
-  100% { color: rgba(255,0,0,0.45); }
-}
-
-/* Zielgruppe für den Lichtschein der Taschenlampe auf der Mainpage */
-.easter-egg .easter-egg-beam {
-  animation: easterEggRainbowBeam 3s linear infinite !important;
-}
-
-/* Zielgruppen für Texte (Menüpunkte, Buttons) */
-.easter-egg .text-red-600,
-.easter-egg .hover\:text-red-600:hover,
-.easter-egg .active\:text-red-600:active {
-  animation: easterEggRainbowText 3s linear infinite !important;
-}
-
-/* Zielgruppen für Hintergründe (Custom Cursor, Scrubber Timeline, Punkte) */
-.easter-egg .bg-red-600,
-.easter-egg .hover\:bg-red-600:hover,
-.easter-egg .custom-cursor {
-  animation: easterEggRainbowBg 3s linear infinite !important;
-}
-
-/* Zielgruppen für Ränder (Mobile Zurück-Button) */
-.easter-egg .border-red-600,
-.easter-egg .border-red-600\/20,
-.easter-egg .border-red-600\/40,
-.easter-egg .group:hover .group-hover\:border-red-600 {
-  animation: easterEggRainbowBorder 3s linear infinite !important;
 }
