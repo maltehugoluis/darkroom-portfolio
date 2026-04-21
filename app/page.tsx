@@ -517,9 +517,12 @@ function DarkroomContent() {
                       <img 
                         src={img.url} 
                         alt={`Archive ${index}`}
-                        loading={index < 4 ? "eager" : "lazy"}
                         decoding="async"
-                      className={`h-full w-auto block object-contain select-none pointer-events-none rounded-lg transition-[transform,filter] duration-500 group-hover:scale-[1.02] transform-gpu will-change-transform ${!isMobile && isNegative ? 'invert' : ''}`}
+                        fetchPriority={index === 0 ? "high" : "auto"}
+                        onLoad={(e) => {
+                          e.currentTarget.classList.remove('opacity-0', 'blur-[10px]');
+                        }}
+                        className={`h-full w-auto block object-contain select-none pointer-events-none rounded-lg opacity-0 blur-[10px] transition-all duration-700 ease-out group-hover:scale-[1.02] transform-gpu will-change-transform ${!isMobile && isNegative ? 'invert' : ''}`}
                       />
                     </div>
                   ))}
