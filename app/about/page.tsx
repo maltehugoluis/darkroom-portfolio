@@ -10,7 +10,6 @@ export default function About() {
   const [isImageLifted, setIsImageLifted] = useState(false);
   const [isHoveringClose, setIsHoveringClose] = useState(false);
   const [meImageUrl, setMeImageUrl] = useState<string | null>(null);
-  const paperRef = useRef<HTMLDivElement>(null);
 
   const handleImageClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -60,24 +59,28 @@ export default function About() {
       }
     }
 
-    const handleMouseMove = (e: MouseEvent) => {
-      document.documentElement.style.setProperty('--x', `${e.clientX}px`);
-      document.documentElement.style.setProperty('--y', `${e.clientY}px`);
+    let rafId: number | null = null;
+    let targetX = -100;
+    let targetY = -100;
 
-      // Lokale Koordinaten für die Pergamin-Hülle berechnen
-      if (paperRef.current) {
-        const rect = paperRef.current.getBoundingClientRect();
-        paperRef.current.style.setProperty('--local-x', `${e.clientX - rect.left}px`);
-        paperRef.current.style.setProperty('--local-y', `${e.clientY - rect.top}px`);
-        
-        // Präzise Hover-Erkennung via Mauskoordinaten anstatt React-Events (verhindert Bugs beim Schließen)
-        const isOverPaper = e.clientX >= rect.left && e.clientX <= rect.right &&
-                            e.clientY >= rect.top && e.clientY <= rect.bottom;
-        setIsHoveringBackground(!isOverPaper);
+    const handleMouseMove = (e: MouseEvent) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+
+      if (rafId === null) {
+        rafId = requestAnimationFrame(() => {
+          document.documentElement.style.setProperty('--x', `${targetX}px`);
+          document.documentElement.style.setProperty('--y', `${targetY}px`);
+          
+          rafId = null;
+        });
       }
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const handleBack = () => {
@@ -94,6 +97,8 @@ export default function About() {
     <main 
       className="h-[100dvh] w-full bg-[#0a0a0a] text-zinc-400 font-mono px-4 md:px-12 selection:bg-red-950 selection:text-white md:cursor-none overflow-x-hidden overflow-y-auto relative flex flex-col items-center"
       onClick={handleBack}
+      onMouseEnter={() => setIsHoveringBackground(true)}
+      onMouseLeave={() => setIsHoveringBackground(false)}
     >
       {/* Hintergrund-Textur (Fotokarton mit Rauschen) */}
       <div className="fixed inset-0 bg-[#0a0a0a] bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20250%20250%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noiseFilter%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.9%22%20numOctaves=%226%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')] opacity-[0.015] pointer-events-none -z-10" />
@@ -103,12 +108,6 @@ export default function About() {
         .custom-cursor { 
           opacity: ${(isHoveringBackground && !isImageLifted) || isHoveringClose ? '0' : '1'} !important; 
           transition: opacity 0.2s ease;
-        }
-        @media (min-width: 768px) {
-          .mask-layer {
-            -webkit-mask-image: radial-gradient(circle 160px at var(--local-x, -1000px) var(--local-y, -1000px), black 0%, transparent 100%);
-            mask-image: radial-gradient(circle 160px at var(--local-x, -1000px) var(--local-y, -1000px), black 0%, transparent 100%);
-          }
         }
       `}</style>
 
@@ -155,24 +154,19 @@ export default function About() {
 
       {/* --- DIE PERGAMIN-HÜLLE (Glassine Sleeve) --- */}
       <motion.div
-        ref={paperRef}
         initial={{ opacity: 0, y: 20, rotate: 2, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 w-full max-w-xl aspect-[4/5] sm:aspect-square md:aspect-[4/3] bg-black/60 backdrop-blur-md shadow-[0_30px_80px_rgba(0,0,0,0.7)] rounded-sm p-6 md:p-12 pointer-events-auto overflow-hidden border border-white/5 shrink-0"
         onClick={(e) => e.stopPropagation()} 
+        onMouseEnter={(e) => { e.stopPropagation(); setIsHoveringBackground(false); }}
+        onMouseLeave={(e) => { e.stopPropagation(); setIsHoveringBackground(true); }}
       >
-        {/* Ebene 1: Basis-Text (Nur Desktop: Standardmäßig unscharf im Hintergrund) */}
-        <div className="hidden md:block absolute inset-12 filter blur-[4px] opacity-80 pointer-events-none" style={{ visibility: isImageLifted ? 'hidden' : 'visible' }}>
-          <TextContent isReveal={false} imageUrl={meImageUrl} onImageClick={handleImageClick} />
-        </div>
-
-        {/* Ebene 2: Interaktiver Text (Auf Mobile voll sichtbar, auf PC durch Maske scharf) */}
         <div 
-          className="absolute inset-6 md:inset-12 pointer-events-none mask-layer"
+          className="absolute inset-6 md:inset-12 pointer-events-auto"
           style={{ visibility: isImageLifted ? 'hidden' : 'visible' }}
         >
-          <TextContent isReveal={true} imageUrl={meImageUrl} onImageClick={handleImageClick} />
+          <TextContent imageUrl={meImageUrl} onImageClick={handleImageClick} />
         </div>
 
       </motion.div>
@@ -232,11 +226,11 @@ export default function About() {
   );
 }
 
-/* --- DIE TEXT INHALTE (Wird zweimal gerendert für den Masken-Effekt) --- */
-function TextContent({ isReveal, imageUrl, onImageClick }: { isReveal: boolean, imageUrl: string | null, onImageClick: (e: React.MouseEvent) => void }) {
-  const baseTextColor = isReveal ? 'text-zinc-200' : 'text-zinc-500';
-  const highlightColor = isReveal ? 'text-white' : 'text-zinc-400';
-  const quoteColor = isReveal ? 'text-zinc-100' : 'text-zinc-400';
+/* --- DIE TEXT INHALTE --- */
+function TextContent({ imageUrl, onImageClick }: { imageUrl: string | null, onImageClick: (e: React.MouseEvent) => void }) {
+  const baseTextColor = 'text-zinc-200';
+  const highlightColor = 'text-white';
+  const quoteColor = 'text-zinc-100';
 
   return (
     <div className={`flex flex-col w-full h-full font-mono transition-colors duration-200 text-[10px] md:text-[13px] ${baseTextColor} overflow-y-auto hide-scrollbar pr-2 pb-4`}>
@@ -247,15 +241,15 @@ function TextContent({ isReveal, imageUrl, onImageClick }: { isReveal: boolean, 
         </div>
         {imageUrl && (
           <motion.div 
-            layoutId={isReveal ? "profile-image" : undefined}
-            className={`w-12 h-16 md:w-16 md:h-20 shrink-0 border border-white/20 p-0.5 bg-white/5 shadow-md ${isReveal ? 'pointer-events-auto cursor-pointer' : ''}`}
+            layoutId="profile-image"
+            className="w-12 h-16 md:w-16 md:h-20 shrink-0 border border-white/20 p-0.5 bg-white/5 shadow-md pointer-events-auto cursor-pointer"
             style={{ rotate: 6 }}
-            onClick={isReveal ? onImageClick : undefined}
+            onClick={onImageClick}
           >
             <img 
               src={imageUrl} 
               alt="Operator" 
-              className={`w-full h-full object-cover transition-colors duration-500 ${isReveal ? 'grayscale-[0.3] contrast-110' : 'grayscale opacity-40'}`}
+              className="w-full h-full object-cover transition-colors duration-500 grayscale-[0.3] contrast-110"
             />
           </motion.div>
         )}
