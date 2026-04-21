@@ -509,34 +509,50 @@ function DarkroomContent() {
               <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
                 <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">{currentCategory}</h1>
               </div>
-              {annotatedImages.map((img, index) => (
-                <div key={index} id={img.isFirstOfPrio ? `prio-section-${img.prio}` : undefined} className="flex-shrink-0 w-full md:w-auto min-h-[30vh] md:min-w-[300px] h-auto md:h-[60vh] flex items-center justify-center cursor-pointer group"
-                  onClick={() => { setSelectedImage(img.url); playClickSound(); stateDepth.current += 1; window.history.pushState({ image: img.url }, '', '/'); }}>
-                  <img 
-                    src={img.url} 
-                    alt={`Archive ${index}`}
-                    loading={index < 4 ? "eager" : "lazy"}
-                    decoding="async"
-                  className={`h-full w-auto block object-contain select-none pointer-events-none rounded-lg transition-[transform,filter] duration-500 group-hover:scale-[1.02] transform-gpu will-change-transform ${!isMobile && isNegative ? 'invert' : ''}`}
-                  />
-                </div>
-              ))}
-              
-              {/* Zurück zum Anfang Button & Spacer für das Ende des Scroll-Bereichs */}
-              <div className="flex-shrink-0 w-full md:w-auto h-32 md:h-[60vh] hidden md:flex items-center justify-center md:pr-[15vw]">
-                <button
-                  onClick={() => {
-                    playClickSound();
-                    scrollContainerRef.current?.scrollTo({ left: 0, top: 0, behavior: 'auto' });
-                  }}
-                  className="group flex flex-col items-center gap-4 text-zinc-600 hover:text-red-600 transition-all duration-500 outline-none"
-                >
-                  <div className="w-16 h-16 rounded-full border border-zinc-800 group-hover:border-red-600 group-hover:shadow-[0_0_15px_rgba(220,38,38,0.5)] flex items-center justify-center transition-all duration-500">
-                    <span className="font-mono text-2xl group-hover:-translate-x-1 transition-transform duration-300">←</span>
+              {annotatedImages.length > 0 ? (
+                <>
+                  {annotatedImages.map((img, index) => (
+                    <div key={index} id={img.isFirstOfPrio ? `prio-section-${img.prio}` : undefined} className="flex-shrink-0 w-full md:w-auto min-h-[30vh] md:min-w-[300px] h-auto md:h-[60vh] flex items-center justify-center cursor-pointer group"
+                      onClick={() => { setSelectedImage(img.url); playClickSound(); stateDepth.current += 1; window.history.pushState({ image: img.url }, '', '/'); }}>
+                      <img 
+                        src={img.url} 
+                        alt={`Archive ${index}`}
+                        loading={index < 4 ? "eager" : "lazy"}
+                        decoding="async"
+                      className={`h-full w-auto block object-contain select-none pointer-events-none rounded-lg transition-[transform,filter] duration-500 group-hover:scale-[1.02] transform-gpu will-change-transform ${!isMobile && isNegative ? 'invert' : ''}`}
+                      />
+                    </div>
+                  ))}
+                  
+                  <div className="flex-shrink-0 w-full md:w-auto h-32 md:h-[60vh] hidden md:flex items-center justify-center md:pr-[15vw]">
+                    <button onClick={() => { playClickSound(); scrollContainerRef.current?.scrollTo({ left: 0, top: 0, behavior: 'auto' }); }}
+                      className="group flex flex-col items-center gap-4 text-zinc-600 hover:text-red-600 transition-all duration-500 outline-none">
+                      <div className="w-16 h-16 rounded-full border border-zinc-800 group-hover:border-red-600 group-hover:shadow-[0_0_15px_rgba(220,38,38,0.5)] flex items-center justify-center transition-all duration-500">
+                        <span className="font-mono text-2xl group-hover:-translate-x-1 transition-transform duration-300">←</span>
+                      </div>
+                      <span className="font-mono text-[10px] tracking-[0.4em] uppercase">Anfang</span>
+                    </button>
                   </div>
-                  <span className="font-mono text-[10px] tracking-[0.4em] uppercase">Anfang</span>
-                </button>
-              </div>
+                </>
+              ) : (
+                <div className="flex-shrink-0 w-full md:w-auto min-h-[50vh] md:h-[60vh] flex items-center justify-center text-center px-6 md:px-8 pb-24 md:pb-0">
+                  <div className="relative w-full max-w-[260px] md:max-w-sm aspect-[4/5] md:aspect-[4/3] bg-[#050000] border border-red-950 shadow-[0_0_30px_rgba(220,38,38,0.05)] rounded-sm flex flex-col items-center justify-center p-6 md:p-8 gap-5 md:gap-6 font-mono overflow-hidden">
+                    {/* Ambient Red Glow */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.05)_0%,transparent_70%)] pointer-events-none" />
+                    
+                    {/* Animated "Developing" Line */}
+                    <motion.div animate={{ y: ['-100%', '400%'] }} transition={{ repeat: Infinity, duration: 3, ease: 'linear' }} className="absolute top-0 left-0 w-full h-[1px] bg-red-600/40 shadow-[0_0_15px_rgba(220,38,38,0.8)]" />
+                    
+                    <div className="relative z-10 flex flex-col items-center gap-4 md:gap-5">
+                      <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-red-600 animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
+                      <h2 className="text-red-500/80 tracking-[0.3em] md:tracking-[0.4em] uppercase font-bold text-xs md:text-sm">In Entwicklung</h2>
+                      <p className="text-zinc-600 text-[10px] md:text-xs tracking-wider max-w-[160px] md:max-w-[200px] leading-relaxed">
+                        Die Negative für dieses Archiv werden aktuell belichtet.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           

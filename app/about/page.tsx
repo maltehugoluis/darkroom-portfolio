@@ -25,14 +25,16 @@ export default function About() {
 
   const closeLiftedImage = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    setIsImageLifted(false);
-    setIsHoveringClose(false);
     const audio: HTMLAudioElement | null = typeof window !== 'undefined' ? (window as any).clickAudio : null;
     if (audio) {
       const clone = audio.cloneNode() as HTMLAudioElement;
       clone.volume = 0.2;
       clone.play().catch(() => {});
     }
+    setTimeout(() => {
+      setIsImageLifted(false);
+      setIsHoveringClose(false);
+    }, 150);
   };
 
   useEffect(() => {
@@ -210,7 +212,8 @@ export default function About() {
       <motion.button 
         initial={{ opacity: 0, scale: 0.8, x: '-50%' }} 
         animate={{ opacity: 1, scale: 1, x: '-50%' }}
-        whileTap={{ scale: 0.85 }}
+        whileTap={{ scale: 0.75, rotate: 45 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
         onClick={(e) => { 
           e.stopPropagation(); 
           if (isImageLifted) {

@@ -146,7 +146,8 @@ export default function Datenschutz() {
       <motion.button 
         initial={{ opacity: 0, scale: 0.8, x: '-50%' }} 
         animate={{ opacity: 1, scale: 1, x: '-50%' }}
-        whileTap={{ scale: 0.85 }}
+        whileTap={{ scale: 0.75, rotate: 45 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
         onClick={(e) => { e.stopPropagation(); handleBack(); }}
         className="md:hidden fixed bottom-10 left-1/2 z-[300] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center"
       >
