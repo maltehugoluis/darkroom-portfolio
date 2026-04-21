@@ -479,7 +479,9 @@ function DarkroomContent() {
         )
       ) : currentCategory === "KONTAKT" ? (
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center">
-          <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">SAY HELLO</h1>
+          <Link href="/about?from=kontakt" onClick={playClickSound} className="block cursor-pointer outline-none">
+            <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">SAY HELLO</h1>
+          </Link>
           <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
             <a href="mailto:breuermalte@icloud.com" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText("breuermalte@icloud.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); playClickSound(); }} 
               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">{copied ? "KOPIERT!" : "breuermalte@icloud.com"}</a>

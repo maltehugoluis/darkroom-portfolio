@@ -3,18 +3,19 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
-if (typeof window !== 'undefined') {
-  if (!(window as any).clickAudio) {
-    (window as any).clickAudio = new Audio('/click.mp3');
-    (window as any).clickAudio.volume = 0.3;
-  }
-}
-
 export default function Datenschutz() {
   const router = useRouter();
   const [isHoveringBackground, setIsHoveringBackground] = useState(false);
 
   useEffect(() => {
+    // Audio sauber innerhalb der Komponente initialisieren
+    if (typeof window !== 'undefined') {
+      if (!(window as any).clickAudio) {
+        (window as any).clickAudio = new Audio('/click.mp3');
+        (window as any).clickAudio.volume = 0.3;
+      }
+    }
+
     const handleMouseMove = (e: MouseEvent) => {
       document.documentElement.style.setProperty('--x', `${e.clientX}px`);
       document.documentElement.style.setProperty('--y', `${e.clientY}px`);
@@ -24,7 +25,7 @@ export default function Datenschutz() {
   }, []);
 
   const handleBack = () => {
-    const audio: HTMLAudioElement | null = (window as any).clickAudio;
+    const audio: HTMLAudioElement | null = typeof window !== 'undefined' ? (window as any).clickAudio : null;
     if (audio) {
       const clone = audio.cloneNode() as HTMLAudioElement;
       clone.volume = audio.volume;
