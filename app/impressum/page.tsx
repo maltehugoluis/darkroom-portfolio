@@ -35,7 +35,7 @@ export default function Impressum() {
 
   return (
     <main 
-      className={`min-h-screen bg-black text-zinc-400 font-mono p-8 md:p-24 selection:bg-red-600 selection:text-white md:cursor-none overflow-y-auto relative`}
+      className={`h-[100dvh] bg-black text-zinc-400 font-mono p-8 md:p-24 selection:bg-red-600 selection:text-white md:cursor-none overflow-y-auto relative`}
       onMouseEnter={() => setIsHoveringBackground(true)}
       onMouseLeave={() => setIsHoveringBackground(false)}
       onClick={handleBack}
@@ -108,6 +108,8 @@ export default function Impressum() {
           </p>
           <p className="text-[10px] italic pt-4">
             Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Malte Breuer
+            <br />
+            Private Portfolio Website gemäß § 5 DDG
           </p>
         </section>
       </div>
