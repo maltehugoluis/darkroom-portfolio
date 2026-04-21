@@ -294,27 +294,39 @@ function DarkroomContent() {
   // Cursor und Canvas-Freikratzen
   useEffect(() => {
     let rafId: number | null = null;
+
+    // Synchronisiere interne Maus-Koordinaten mit CSS-Variablen (z.B. beim Zurückkommen vom Impressum)
+    const storedX = document.documentElement.style.getPropertyValue('--x');
+    const storedY = document.documentElement.style.getPropertyValue('--y');
+    if (storedX && storedY) {
+      globalMouseX = parseFloat(storedX);
+      globalMouseY = parseFloat(storedY);
+      if (beamRef.current) {
+        beamRef.current.style.background = `radial-gradient(circle ${isMobile ? '85px' : '180px'} at ${globalMouseX}px ${globalMouseY}px, currentColor 0%, rgba(0,0,0,0) 100%)`;
+      }
+    }
+
     const updatePosition = (x: number, y: number) => {
       globalMouseX = x;
       globalMouseY = y;
       
+      document.documentElement.style.setProperty('--x', `${x}px`);
+      document.documentElement.style.setProperty('--y', `${y}px`);
+
       if (rafId === null) {
         rafId = requestAnimationFrame(() => {
-          if (cursorRef.current) {
-            cursorRef.current.style.transform = `translate3d(calc(${globalMouseX}px - 50%), calc(${globalMouseY}px - 50%), 0)`;
-          }
           if (zurueckRef.current) {
             zurueckRef.current.style.left = `calc(${globalMouseX}px + 25px)`;
             zurueckRef.current.style.top = `${globalMouseY}px`;
           }
           if (beamRef.current) {
-            beamRef.current.style.background = `radial-gradient(circle ${isMobile ? '200px' : '550px'} at ${globalMouseX}px ${globalMouseY}px, currentColor 0%, rgba(0,0,0,0) 70%)`;
+            beamRef.current.style.background = `radial-gradient(circle ${isMobile ? '85px' : '180px'} at ${globalMouseX}px ${globalMouseY}px, currentColor 0%, rgba(0,0,0,0) 100%)`;
           }
 
           if (!currentCategory && canvasRef.current) {
             const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
             if (ctx) {
-              const radius = isMobile ? 45 : 100;
+              const radius = isMobile ? 60 : 130;
               const gradient = ctx.createRadialGradient(globalMouseX, globalMouseY, 0, globalMouseX, globalMouseY, radius); 
               gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
               gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
@@ -415,7 +427,7 @@ function DarkroomContent() {
         {loading && <ChemistryTimer onComplete={() => {}} />}
       </AnimatePresence>
 
-      {(!isMobile || !currentCategory) && !leftZoneHovered && <div ref={cursorRef} className="custom-cursor" style={{ transform: `translate3d(calc(${globalMouseX}px - 50%), calc(${globalMouseY}px - 50%), 0)` }} />}
+      {(!isMobile || !currentCategory) && !leftZoneHovered && <div ref={cursorRef} className="custom-cursor" />}
 
       {(currentCategory || selectedImage) && (
         <>
@@ -461,7 +473,7 @@ function DarkroomContent() {
             </div>
             <canvas ref={canvasRef} className="absolute inset-0 z-20 pointer-events-none" />
           <div ref={beamRef} className="pointer-events-none fixed inset-0 z-30 mix-blend-screen easter-egg-beam" 
-            style={{ color: 'rgba(255, 30, 30, 0.45)', background: `radial-gradient(circle ${isMobile ? '200px' : '550px'} at ${globalMouseX}px ${globalMouseY}px, currentColor 0%, rgba(0,0,0,0) 70%)` }} 
+            style={{ color: 'rgba(255, 30, 30, 0.45)', background: `radial-gradient(circle ${isMobile ? '85px' : '180px'} at ${globalMouseX}px ${globalMouseY}px, currentColor 0%, rgba(0,0,0,0) 100%)` }} 
             />
           </div>
         )

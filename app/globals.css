@@ -49,19 +49,6 @@ body {
   transition: width 0.2s ease, height 0.2s ease, opacity 0.3s ease;
 }
 
-/* Performanterer Glow via Pseudo-Element statt teurem box-shadow */
-.custom-cursor::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 400%;
-  height: 400%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(239, 68, 68, 0.8) 0%, rgba(239, 68, 68, 0) 70%);
-  pointer-events: none;
-}
-
 /* 4. MOBILE OPTIMIERUNGEN (Media Queries) */
 @media (max-width: 768px) {
   .custom-cursor {
