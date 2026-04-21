@@ -219,10 +219,10 @@ export default function About() {
             handleBack(); 
           }
         }}
-        className="md:hidden fixed bottom-10 left-1/2 z-[900] w-16 h-16 rounded-full border-2 border-dashed border-white/40 bg-black/80 backdrop-blur-sm flex items-center justify-center"
+        className="md:hidden fixed bottom-10 left-1/2 z-[900] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center"
       >
-        <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center">
-          <span className="text-white font-mono text-lg">{isImageLifted ? "✕" : "←"}</span>
+        <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
+          <span className="text-red-600 font-mono text-lg">{isImageLifted ? "✕" : "←"}</span>
         </div>
       </motion.button>
     </main>
