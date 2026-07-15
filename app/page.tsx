@@ -23,7 +23,6 @@ let bufferHeight = 0;
 // Zeitstempel für Sound-Debouncing, um doppelte Wiedergaben rigoros zu verhindern
 let lastClickPlayTime = 0;
 let lastAutofocusPlayTime = 0;
-let lastNegativePlayTime = 0;
 let globalMouseX = -100;
 let globalMouseY = -100;
 
@@ -36,10 +35,6 @@ if (typeof window !== 'undefined') {
   if (!(window as any).autofocusAudio) {
     (window as any).autofocusAudio = new Audio('/autofocus.mp3');
     (window as any).autofocusAudio.volume = 0.4;
-  }
-  if (!(window as any).negativeAudio) {
-    (window as any).negativeAudio = new Audio('/negative.mp3');
-    (window as any).negativeAudio.volume = 0.4;
   }
 }
 
@@ -63,7 +58,6 @@ function DarkroomContent() {
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
   const [markerProgress, setMarkerProgress] = useState<Record<number, number>>({});
-  const [isNegative, setIsNegative] = useState(false);
   
   const stateDepth = useRef(0);
 
@@ -138,19 +132,6 @@ function DarkroomContent() {
     }
   };
 
-  const playNegativeSound = () => {
-    const now = Date.now();
-    if (now - lastNegativePlayTime < 100) return; // 100ms Blockade für den Modus-Switch
-    lastNegativePlayTime = now;
-
-    const audio: HTMLAudioElement | null = (window as any).negativeAudio;
-    if (audio) {
-      const clone = audio.cloneNode() as HTMLAudioElement;
-      clone.volume = audio.volume;
-      clone.play().catch(() => {});
-    }
-  };
-
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -163,7 +144,6 @@ function DarkroomContent() {
 
   useEffect(() => {
     setLeftZoneHovered(false);
-    setIsNegative(false); // Negativ-Modus beim Wechseln der Kategorie immer zurücksetzen
     if (scrollContainerRef.current) scrollContainerRef.current.scrollLeft = 0;
   }, [currentCategory]);
 
@@ -522,7 +502,7 @@ function DarkroomContent() {
                         onLoad={(e) => {
                           e.currentTarget.classList.remove('opacity-0', 'blur-[10px]');
                         }}
-                        className={`h-full w-auto block object-contain select-none pointer-events-none rounded-lg opacity-0 blur-[10px] transition-all duration-700 ease-out group-hover:scale-[1.02] transform-gpu will-change-transform ${!isMobile && isNegative ? 'invert' : ''}`}
+                        className="h-full w-auto block object-contain select-none pointer-events-none rounded-lg opacity-0 blur-[10px] transition-all duration-700 ease-out group-hover:scale-[1.02] transform-gpu will-change-transform"
                       />
                     </div>
                   ))}
@@ -550,7 +530,7 @@ function DarkroomContent() {
                       <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-red-600 animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
                       <h2 className="text-red-500/80 tracking-[0.3em] md:tracking-[0.4em] uppercase font-bold text-xs md:text-sm">In Entwicklung</h2>
                       <p className="text-zinc-600 text-[10px] md:text-xs tracking-wider max-w-[160px] md:max-w-[200px] leading-relaxed">
-                        Die Negative für dieses Archiv werden aktuell belichtet.
+                        Dieses Archiv wird gerade belichtet.
                       </p>
                     </div>
                   </div>
@@ -559,18 +539,6 @@ function DarkroomContent() {
             </div>
           </div>
           
-          {/* Negative Switch (Nur PC) */}
-          {!isMobile && currentCategory && currentCategory !== "KONTAKT" && !selectedImage && (
-            <div className="fixed top-8 right-12 z-[150] flex items-center gap-3 opacity-30 hover:opacity-100 transition-opacity duration-500 cursor-pointer group" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsNegative(!isNegative); playNegativeSound(); }}>
-              <span className="font-mono text-[10px] tracking-[0.2em] text-white uppercase select-none transition-colors group-hover:text-red-600">Negative</span>
-              <button
-                className={`w-10 h-5 rounded-full border transition-all duration-500 outline-none flex items-center p-1 ${isNegative ? 'bg-red-600 border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-transparent border-zinc-700 group-hover:border-red-600'}`}
-              >
-                <div className={`w-3 h-3 rounded-full bg-white transition-transform duration-500 ${isNegative ? 'translate-x-5' : 'translate-x-0'}`} />
-              </button>
-            </div>
-          )}
-
           {/* Zeitleiste (Timeline) - Nur auf dem PC sichtbar und ab > 1 Prio-Level */}
           {!isMobile && !isShortScreen && uniquePrios.length > 1 && (
             <div className="fixed bottom-12 left-1/2 -translate-x-1/2 w-1/3 max-w-lg z-[150] block opacity-30 hover:opacity-100 transition-opacity duration-500 h-8 group">
