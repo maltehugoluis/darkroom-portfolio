@@ -294,7 +294,7 @@ function TextContent({ imageUrl, onImageClick }: { imageUrl: string | null, onIm
             [MAIL]
           </a>
           <a 
-            href="https://www.instagram.com/mhlensvisuals" 
+            href="https://www.instagram.com/mhlportfolio" 
             target="_blank" 
             rel="noopener noreferrer" 
             className={`pointer-events-auto ${highlightColor} hover:text-red-500 transition-colors`}

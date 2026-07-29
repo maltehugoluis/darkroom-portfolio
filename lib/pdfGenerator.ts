@@ -147,8 +147,8 @@ export async function generatePortfolioPDF(
     "Lichtstimmungen, präzisen Schattenkontrasten",
     "und klaren bildgestalterischen Kompositionen.",
     "",
-    "Verwendete Systeme umfassen moderne Vollformat-",
-    "Sensoren sowie analoge 35mm-Formate."
+    "Die Mehrheit der Arbeiten entstammt der Fujifilm X-T5",
+    "sowie ausgewählten analogen 35mm-Formate."
   ];
 
   let lineY = 72;
@@ -171,8 +171,8 @@ export async function generatePortfolioPDF(
   const metaItems = [
     { label: "FOTOGRAF:", value: "Malte Breuer" },
     { label: "E-MAIL:", value: "breuermalte@icloud.com" },
-    { label: "INSTAGRAM:", value: "@mhlensvisuals" },
-    { label: "STANDORT:", value: "Wuppertal / GER" },
+    { label: "INSTAGRAM:", value: "@mhlportfolio" },
+    { label: "STANDORT:", value: "Biberach / GER" },
     { label: "DATUM:", value: today },
     { label: "WERKE:", value: `${sortedImages.length} Belichtungen` },
   ];
@@ -286,7 +286,7 @@ export async function generatePortfolioPDF(
         doc.setTextColor(212, 212, 216);
 
         const locText = (item.location || "N/A").toUpperCase();
-        const camText = (item.camera_model || "LEICA/ANALOG").toUpperCase();
+        const camText = (item.camera_model || "FUJIFILM X-T5").toUpperCase();
         const yearText = item.year || "2026";
         doc.text(`${locText} • ${camText} • ${yearText}`, cellX + 28, metaY);
       } catch (e) {
@@ -400,7 +400,7 @@ export async function generatePortfolioPDF(
       doc.setFont("courier", "bold");
       doc.setFontSize(9.5);
       doc.setTextColor(220, 38, 38);
-      doc.text(item.camera_model || "LEICA / ANALOG", sideX, 81);
+      doc.text(item.camera_model || "FUJIFILM X-T5", sideX, 81);
 
       doc.setFont("courier", "normal");
       doc.setFontSize(8);
