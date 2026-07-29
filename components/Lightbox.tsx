@@ -89,7 +89,7 @@ export default function Lightbox({ src, onClose, onPrev, onNext, imageData }: Li
           }}
           onMouseEnter={() => setIsHoveringBackground(false)}
           onMouseLeave={() => setIsHoveringBackground(true)}
-          className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 z-[300] w-12 h-12 rounded-full border border-white/10 bg-black/60 backdrop-blur-md text-white hover:text-red-500 hover:border-red-600 transition-all flex items-center justify-center font-mono text-xl group pointer-events-auto shadow-xl"
+          className="hidden md:flex fixed left-4 md:left-8 top-1/2 -translate-y-1/2 z-[300] w-12 h-12 rounded-full border border-white/10 bg-black/60 backdrop-blur-md text-white hover:text-red-500 hover:border-red-600 transition-all items-center justify-center font-mono text-xl group pointer-events-auto shadow-xl"
           title="Vorheriges Bild (Pfeil-Taste Links)"
         >
           <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
@@ -104,7 +104,7 @@ export default function Lightbox({ src, onClose, onPrev, onNext, imageData }: Li
           }}
           onMouseEnter={() => setIsHoveringBackground(false)}
           onMouseLeave={() => setIsHoveringBackground(true)}
-          className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-[300] w-12 h-12 rounded-full border border-white/10 bg-black/60 backdrop-blur-md text-white hover:text-red-500 hover:border-red-600 transition-all flex items-center justify-center font-mono text-xl group pointer-events-auto shadow-xl"
+          className="hidden md:flex fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-[300] w-12 h-12 rounded-full border border-white/10 bg-black/60 backdrop-blur-md text-white hover:text-red-500 hover:border-red-600 transition-all items-center justify-center font-mono text-xl group pointer-events-auto shadow-xl"
           title="Nächstes Bild (Pfeil-Taste Rechts)"
         >
           <span className="group-hover:translate-x-0.5 transition-transform">→</span>
