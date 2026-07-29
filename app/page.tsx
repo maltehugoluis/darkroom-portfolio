@@ -504,7 +504,7 @@ function DarkroomContent() {
           </AnimatePresence>
           <motion.button initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
             whileTap={{ scale: 0.75, rotate: 45 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            onClick={handleBackAction} className={`md:hidden fixed left-1/2 z-[600] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center ${selectedImage ? 'bottom-10' : 'bottom-22'}`}>
+            onClick={handleBackAction} className={`md:hidden fixed left-1/2 z-[600] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center ${selectedImage ? 'bottom-8' : 'bottom-16'}`}>
             <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
               <span className="text-red-600 font-mono text-lg">{selectedImage ? "✕" : "←"}</span>
             </div>
@@ -632,7 +632,7 @@ function DarkroomContent() {
           
           {/* FLOATING DARKROOM NAVIGATION & PROGRESS CONTROL BAR */}
           {currentCategory && currentCategory !== "KONTAKT" && (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] w-[94%] max-w-xl bg-black/85 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] rounded-full px-3 py-2 flex items-center justify-between gap-2 font-mono overflow-hidden">
+            <div className="fixed bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 z-[150] w-[94%] max-w-xl bg-black/85 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] rounded-full px-3 py-2 flex items-center justify-between gap-2 font-mono overflow-hidden">
               
               {/* Category Pills Switcher - Centered */}
               <div className="flex items-center justify-center gap-1.5 overflow-x-auto hide-scrollbar mx-auto flex-1">
