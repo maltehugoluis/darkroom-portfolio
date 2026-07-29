@@ -233,6 +233,12 @@ function DarkroomContent() {
     playAutofocusSound();
 
     if (showLoading) {
+      // Sofort Kategorie und Loading State setzen, um Hängen im Menü-Screen zu vermeiden
+      setCurrentCategory(label);
+      setLoading(true);
+      setScrollPercent(0);
+      setCurrentFrameIndex(1);
+
       // Backup des aktuellen Canvas-Stands machen
       if (canvasRef.current) {
         const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
@@ -243,11 +249,39 @@ function DarkroomContent() {
         }
       }
 
-      setLoading(true);
-
       if (label !== "KONTAKT") {
-        let categoryData = categoryCacheRef.current[label];
-        if (!categoryData) {
+        try {
+          let categoryData = categoryCacheRef.current[label];
+          if (!categoryData) {
+            const { data } = await supabase
+              .from('images')
+              .select('*')
+              .eq('category', label)
+              .order('prio', { ascending: true })
+              .order('created_at', { ascending: false });
+            if (data) {
+              categoryData = data;
+              categoryCacheRef.current[label] = data;
+            }
+          }
+          if (categoryData) setImages(categoryData);
+        } catch (err) {
+          console.error("Error fetching images for category:", err);
+        }
+      }
+
+      setTimeout(() => { 
+        setLoading(false); 
+        stateDepth.current += 1;
+        window.history.pushState({ category: label }, '', '/');
+      }, 1200);
+    } else {
+      // Nahtloser Micro-Fade-Wechsel über die Control Bar ohne Ruckeln
+      setIsCategoryFading(true);
+
+      let categoryData = categoryCacheRef.current[label];
+      if (!categoryData && label !== "KONTAKT") {
+        try {
           const { data } = await supabase
             .from('images')
             .select('*')
@@ -258,31 +292,8 @@ function DarkroomContent() {
             categoryData = data;
             categoryCacheRef.current[label] = data;
           }
-        }
-        if (categoryData) setImages(categoryData);
-      }
-
-      setTimeout(() => { 
-        setLoading(false); 
-        setCurrentCategory(label); 
-        stateDepth.current += 1;
-        window.history.pushState({ category: label }, '', '/');
-      }, 1500);
-    } else {
-      // Nahtloser Micro-Fade-Wechsel über die Control Bar ohne Ruckeln
-      setIsCategoryFading(true);
-
-      let categoryData = categoryCacheRef.current[label];
-      if (!categoryData && label !== "KONTAKT") {
-        const { data } = await supabase
-          .from('images')
-          .select('*')
-          .eq('category', label)
-          .order('prio', { ascending: true })
-          .order('created_at', { ascending: false });
-        if (data) {
-          categoryData = data;
-          categoryCacheRef.current[label] = data;
+        } catch (err) {
+          console.error("Error fetching images for category:", err);
         }
       }
 
