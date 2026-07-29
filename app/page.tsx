@@ -233,8 +233,6 @@ function DarkroomContent() {
     playAutofocusSound();
 
     if (showLoading) {
-      // Sofort Kategorie und Loading State setzen, um Hängen im Menü-Screen zu vermeiden
-      setCurrentCategory(label);
       setLoading(true);
       setScrollPercent(0);
       setCurrentFrameIndex(1);
@@ -249,9 +247,10 @@ function DarkroomContent() {
         }
       }
 
+      let categoryData: any[] | null = null;
       if (label !== "KONTAKT") {
         try {
-          let categoryData = categoryCacheRef.current[label];
+          categoryData = categoryCacheRef.current[label] || null;
           if (!categoryData) {
             const { data } = await supabase
               .from('images')
@@ -264,13 +263,14 @@ function DarkroomContent() {
               categoryCacheRef.current[label] = data;
             }
           }
-          if (categoryData) setImages(categoryData);
         } catch (err) {
           console.error("Error fetching images for category:", err);
         }
       }
 
       setTimeout(() => { 
+        if (categoryData) setImages(categoryData);
+        setCurrentCategory(label);
         setLoading(false); 
         stateDepth.current += 1;
         window.history.pushState({ category: label }, '', '/');
@@ -502,15 +502,13 @@ function DarkroomContent() {
                 style={{ left: `calc(${globalMouseX}px + 25px)`, top: `${globalMouseY}px` }}>← ZURÜCK</motion.div>
             )}
           </AnimatePresence>
-          {selectedImage && (
-            <motion.button initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
-              whileTap={{ scale: 0.75, rotate: 45 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              onClick={handleBackAction} className="md:hidden fixed bottom-10 left-1/2 z-[600] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center">
-              <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
-                <span className="text-red-600 font-mono text-lg">✕</span>
-              </div>
-            </motion.button>
-          )}
+          <motion.button initial={{ opacity: 0, scale: 0.8, x: '-50%' }} animate={{ opacity: 1, scale: 1, x: '-50%' }}
+            whileTap={{ scale: 0.75, rotate: 45 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            onClick={handleBackAction} className={`md:hidden fixed left-1/2 z-[600] w-16 h-16 rounded-full border-2 border-dashed border-red-600/40 bg-black/20 backdrop-blur-sm flex items-center justify-center ${selectedImage ? 'bottom-10' : 'bottom-22'}`}>
+            <div className="w-10 h-10 rounded-full border border-red-600/20 flex items-center justify-center">
+              <span className="text-red-600 font-mono text-lg">{selectedImage ? "✕" : "←"}</span>
+            </div>
+          </motion.button>
         </>
       )}
 
@@ -636,19 +634,6 @@ function DarkroomContent() {
           {currentCategory && currentCategory !== "KONTAKT" && (
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] w-[94%] max-w-xl bg-black/85 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] rounded-full px-3 py-2 flex items-center justify-between gap-2 font-mono overflow-hidden">
               
-              {/* Back Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleBackAction();
-                }}
-                className="text-red-500 hover:text-white font-mono text-xs font-bold px-2.5 py-1 rounded-full border border-red-900/60 bg-red-950/40 hover:bg-red-900 transition-colors shrink-0 flex items-center gap-1"
-                title="Zurück zum Hauptmenü"
-              >
-                <span>←</span>
-                <span className="hidden sm:inline text-[10px]">ZURÜCK</span>
-              </button>
-
               {/* Category Pills Switcher - Centered */}
               <div className="flex items-center justify-center gap-1.5 overflow-x-auto hide-scrollbar mx-auto flex-1">
                 {MENU.filter(m => m.id !== "kontakt").map((item) => {
