@@ -233,9 +233,14 @@ function DarkroomContent() {
     playAutofocusSound();
 
     if (showLoading) {
+      // 1. Sofort Kategorie und Loading State setzen
+      setCurrentCategory(label);
       setLoading(true);
       setScrollPercent(0);
       setCurrentFrameIndex(1);
+
+      // Bilder leeren, damit keine alten Fotos während des Entwickelns durchblitzen
+      setImages([]);
 
       // Backup des aktuellen Canvas-Stands machen
       if (canvasRef.current) {
@@ -270,10 +275,11 @@ function DarkroomContent() {
 
       setTimeout(() => { 
         if (categoryData) setImages(categoryData);
-        setCurrentCategory(label);
         setLoading(false); 
         stateDepth.current += 1;
-        window.history.pushState({ category: label }, '', '/');
+        try {
+          window.history.pushState({ category: label }, '', '/');
+        } catch (e) {}
       }, 1200);
     } else {
       // Nahtloser Micro-Fade-Wechsel über die Control Bar ohne Ruckeln
@@ -308,7 +314,9 @@ function DarkroomContent() {
         }
 
         stateDepth.current += 1;
-        window.history.pushState({ category: label }, '', '/');
+        try {
+          window.history.pushState({ category: label }, '', '/');
+        } catch (e) {}
 
         // Sanftes Einblenden der neuen Kategorie und Bilder synchron
         requestAnimationFrame(() => {
@@ -520,7 +528,7 @@ function DarkroomContent() {
             {/* Menü-Container: Exakt zentriert über den gesamten Bildschirm ohne störendes Padding */}
             <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 pointer-events-none transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
-                <button key={item.id} onClick={() => selectCategory(item.label)}
+                <button key={item.id} type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); selectCategory(item.label); }}
                 className="pointer-events-auto text-[clamp(2rem,min(10vw,8vh),6rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
                   {item.label}
                 </button>
@@ -641,7 +649,10 @@ function DarkroomContent() {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => {
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         if (!isActive) selectCategory(item.label, false);
                       }}
                       className={`text-[10px] md:text-[11px] px-3 py-1 rounded-full uppercase tracking-wider transition-all whitespace-nowrap border ${
