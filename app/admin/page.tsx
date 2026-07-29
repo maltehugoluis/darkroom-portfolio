@@ -234,8 +234,8 @@ export default function AdminPage() {
     }
   };
 
-  // Helper function to compress images to WebP before upload
-  const compressImageToWebP = (file: File, maxDimension: number = 2500, quality: number = 0.82): Promise<File> => {
+  // Helper function to compress images to WebP before upload (max 1920px, 72% quality)
+  const compressImageToWebP = (file: File, maxDimension: number = 1920, quality: number = 0.72): Promise<File> => {
     return new Promise((resolve) => {
       if (!file.type.startsWith("image/")) {
         return resolve(file);
@@ -382,8 +382,8 @@ export default function AdminPage() {
       if (uploadFile) {
         const origSizeMB = (uploadFile.size / (1024 * 1024)).toFixed(2);
 
-        // Compress image to WebP format before uploading
-        const fileToUpload = await compressImageToWebP(uploadFile, 2500, 0.82);
+        // Compress image to WebP format before uploading (1920px, 72% quality)
+        const fileToUpload = await compressImageToWebP(uploadFile, 1920, 0.72);
         const webpSizeMB = (fileToUpload.size / (1024 * 1024)).toFixed(2);
         
         compressionNotice = ` (${origSizeMB}MB ➔ ${webpSizeMB}MB WebP)`;
@@ -875,7 +875,7 @@ export default function AdminPage() {
                     className="w-full text-xs text-zinc-400 bg-zinc-950 border border-zinc-800 rounded-sm p-2 file:mr-4 file:py-1 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-mono file:bg-red-600 file:text-white hover:file:bg-red-500 cursor-pointer"
                   />
                   <p className="text-[9px] text-zinc-500 mt-1">
-                    Dateien werden vor dem Upload automatisch in hochauflösendes WebP komprimiert (~70-90% Speicherersparnis).
+                    Dateien werden vor dem Upload automatisch stark in komprimiertes WebP umgewandelt (max 1920px, ~72% Qualität).
                   </p>
                 </div>
 
