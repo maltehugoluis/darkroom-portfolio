@@ -459,15 +459,25 @@ export default function AdminPage() {
     if (!deleteTarget) return;
     playClickSound();
     try {
+      // 1. If stored in Supabase Storage, attempt deleting file from bucket
+      if (deleteTarget.url && deleteTarget.url.includes("/storage/v1/object/public/images/")) {
+        const parts = deleteTarget.url.split("/storage/v1/object/public/images/");
+        if (parts[1]) {
+          const filePath = parts[1];
+          await supabase.storage.from("images").remove([filePath]);
+        }
+      }
+
+      // 2. Delete database row from 'images' table
       const { error } = await supabase.from("images").delete().eq("id", deleteTarget.id);
       if (error) throw error;
 
-      showStatus("BILD UNWIDERRUFLICH GELÖSCHT", "success");
+      showStatus("BILD UNWIDERRUFLICH ERFOLGREICH GELÖSCHT", "success");
       setDeleteTarget(null);
       fetchImages(currentCategory);
     } catch (err: any) {
       console.error("Fehler beim Löschen:", err);
-      showStatus("FEHLER BEIM LÖSCHEN DES BILDES", "error");
+      showStatus(`FEHLER BEIM LÖSCHEN: ${err.message || "Unbekannter Fehler"}`, "error");
     }
   };
 
