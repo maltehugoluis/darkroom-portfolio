@@ -234,8 +234,8 @@ export default function AdminPage() {
     }
   };
 
-  // Helper function to compress images to WebP before upload (max 1920px, 72% quality)
-  const compressImageToWebP = (file: File, maxDimension: number = 1920, quality: number = 0.72): Promise<File> => {
+  // Helper function to compress images to WebP before upload
+  const compressImageToWebP = (file: File, maxDimension: number = 1920, quality: number = 0.70): Promise<File> => {
     return new Promise((resolve) => {
       if (!file.type.startsWith("image/")) {
         return resolve(file);
@@ -247,6 +247,11 @@ export default function AdminPage() {
       img.onload = () => {
         URL.revokeObjectURL(url);
         let { width, height } = img;
+
+        // If dimensions are within maxDimension AND original file size is already very small (< 400KB), keep original
+        if (width <= maxDimension && height <= maxDimension && file.size < 400 * 1024) {
+          return resolve(file);
+        }
 
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
@@ -265,11 +270,19 @@ export default function AdminPage() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return resolve(file);
 
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, width, height);
 
         canvas.toBlob(
           (blob) => {
             if (!blob) return resolve(file);
+
+            // CRITICAL PROTECTION: Only use converted WebP if it is actually SMALLER than original file!
+            if (blob.size >= file.size) {
+              console.log(`Original file (${(file.size / 1024).toFixed(0)}KB) is smaller than WebP output (${(blob.size / 1024).toFixed(0)}KB). Keeping original.`);
+              return resolve(file);
+            }
 
             const originalName = file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
             const webpFileName = `${originalName.replace(/[^a-zA-Z0-9_-]/g, "_")}.webp`;
@@ -382,14 +395,23 @@ export default function AdminPage() {
       if (uploadFile) {
         const origSizeMB = (uploadFile.size / (1024 * 1024)).toFixed(2);
 
-        // Compress image to WebP format before uploading (1920px, 72% quality)
-        const fileToUpload = await compressImageToWebP(uploadFile, 1920, 0.72);
-        const webpSizeMB = (fileToUpload.size / (1024 * 1024)).toFixed(2);
-        
-        compressionNotice = ` (${origSizeMB}MB ➔ ${webpSizeMB}MB WebP)`;
+        // Compress image to WebP format if it actually reduces size
+        const fileToUpload = await compressImageToWebP(uploadFile, 1920, 0.70);
+        const finalSizeMB = (fileToUpload.size / (1024 * 1024)).toFixed(2);
+        const isWebPConverted = fileToUpload.type === "image/webp" && fileToUpload !== uploadFile;
 
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.webp`;
+        if (isWebPConverted) {
+          compressionNotice = ` (${origSizeMB}MB ➔ ${finalSizeMB}MB WebP)`;
+        } else {
+          compressionNotice = ` (${finalSizeMB}MB - bereits optimal komprimiert)`;
+        }
+
+        const ext = isWebPConverted
+          ? "webp"
+          : uploadFile.name.split(".").pop()?.toLowerCase() || "jpg";
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
         const filePath = `${formCategory.toLowerCase()}/${fileName}`;
+        const mimeType = isWebPConverted ? "image/webp" : uploadFile.type || "image/jpeg";
 
         // Try uploading to 'Portfolio', 'portfolio', or 'images' bucket
         const bucketsToTry = ["Portfolio", "portfolio", "images"];
@@ -400,7 +422,7 @@ export default function AdminPage() {
           const { error: uploadErr } = await supabase.storage
             .from(bucketName)
             .upload(filePath, fileToUpload, {
-              contentType: "image/webp",
+              contentType: mimeType,
               upsert: true,
             });
 
