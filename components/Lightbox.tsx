@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 interface LightboxProps {
   src: string;
   onClose: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
   imageData?: {
     location?: string;
     camera_model?: string;
@@ -12,7 +14,7 @@ interface LightboxProps {
   };
 }
 
-export default function Lightbox({ src, onClose, imageData }: LightboxProps) {
+export default function Lightbox({ src, onClose, onPrev, onNext, imageData }: LightboxProps) {
   const [isHoveringBackground, setIsHoveringBackground] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -22,6 +24,25 @@ export default function Lightbox({ src, onClose, imageData }: LightboxProps) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Keyboard navigation for Arrow Left / Arrow Right / Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        onPrev?.();
+      } else if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        onNext?.();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onPrev, onNext, onClose]);
 
   return (
     <motion.div
@@ -59,6 +80,37 @@ export default function Lightbox({ src, onClose, imageData }: LightboxProps) {
         )}
       </AnimatePresence>
 
+      {/* NAVIGATIONS-BUTTONS (LINKS / RECHTS) */}
+      {onPrev && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPrev();
+          }}
+          onMouseEnter={() => setIsHoveringBackground(false)}
+          onMouseLeave={() => setIsHoveringBackground(true)}
+          className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 z-[300] w-12 h-12 rounded-full border border-white/10 bg-black/60 backdrop-blur-md text-white hover:text-red-500 hover:border-red-600 transition-all flex items-center justify-center font-mono text-xl group pointer-events-auto shadow-xl"
+          title="Vorheriges Bild (Pfeil-Taste Links)"
+        >
+          <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+        </button>
+      )}
+
+      {onNext && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
+          onMouseEnter={() => setIsHoveringBackground(false)}
+          onMouseLeave={() => setIsHoveringBackground(true)}
+          className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-[300] w-12 h-12 rounded-full border border-white/10 bg-black/60 backdrop-blur-md text-white hover:text-red-500 hover:border-red-600 transition-all flex items-center justify-center font-mono text-xl group pointer-events-auto shadow-xl"
+          title="Nächstes Bild (Pfeil-Taste Rechts)"
+        >
+          <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+        </button>
+      )}
+
       <div className="relative flex flex-col md:flex-row items-center justify-center w-full max-w-6xl h-full gap-8 md:gap-16 z-[210] pointer-events-none">
         
         {/* BILD-CONTAINER */}
@@ -69,10 +121,12 @@ export default function Lightbox({ src, onClose, imageData }: LightboxProps) {
           onMouseLeave={() => setIsHoveringBackground(true)}
         >
           <motion.img
+            key={src}
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2 }}
             src={src}
-            className="max-h-full max-w-full object-contain shadow-2xl border border-zinc-900"
+            className="max-h-full max-w-full object-contain shadow-2xl border border-zinc-900 rounded-xs"
             alt="Selected Work"
           />
         </div>
@@ -113,6 +167,9 @@ export default function Lightbox({ src, onClose, imageData }: LightboxProps) {
           <div className="hidden md:block mt-12 border-t border-zinc-900 pt-4">
             <p className="text-[24px] font-black text-zinc-800 leading-none font-mono tracking-tighter select-none">
               {imageData?.year ? `REF-${imageData.year.slice(-2)}` : "FRAME"}
+            </p>
+            <p className="text-[9px] text-zinc-700 font-mono tracking-widest mt-2 uppercase">
+              [ ← / → NAVIGIEREN ]
             </p>
           </div>
         </div>

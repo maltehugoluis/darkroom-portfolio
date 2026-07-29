@@ -321,6 +321,26 @@ function DarkroomContent() {
     }, 150);
   };
 
+  const handlePrevImage = () => {
+    if (!selectedImage || images.length === 0) return;
+    const currentIndex = images.findIndex((img) => img.url === selectedImage);
+    if (currentIndex === -1) return;
+
+    playClickSound();
+    const prevIndex = (currentIndex - 1 + images.length) % images.length;
+    setSelectedImage(images[prevIndex].url);
+  };
+
+  const handleNextImage = () => {
+    if (!selectedImage || images.length === 0) return;
+    const currentIndex = images.findIndex((img) => img.url === selectedImage);
+    if (currentIndex === -1) return;
+
+    playClickSound();
+    const nextIndex = (currentIndex + 1) % images.length;
+    setSelectedImage(images[nextIndex].url);
+  };
+
   // Cursor und Canvas-Freikratzen
   useEffect(() => {
     let rafId: number | null = null;
@@ -645,7 +665,17 @@ function DarkroomContent() {
         </>
       )}
 
-      <AnimatePresence>{selectedImage && <Lightbox src={selectedImage} imageData={images.find(i => i.url === selectedImage)} onClose={handleBackAction} />}</AnimatePresence>
+      <AnimatePresence>
+        {selectedImage && (
+          <Lightbox
+            src={selectedImage}
+            imageData={images.find((i) => i.url === selectedImage)}
+            onClose={handleBackAction}
+            onPrev={handlePrevImage}
+            onNext={handleNextImage}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 }
