@@ -632,7 +632,7 @@ function DarkroomContent() {
           
           {/* FLOATING DARKROOM NAVIGATION & PROGRESS CONTROL BAR */}
           {currentCategory && currentCategory !== "KONTAKT" && (
-            <div className="fixed bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 z-[150] w-[94%] max-w-xl bg-black/85 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] rounded-full px-3 py-2 flex items-center justify-between gap-2 font-mono overflow-hidden">
+            <div className="fixed bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 z-[150] w-[94%] max-w-xl bg-transparent md:bg-black/85 backdrop-blur-none md:backdrop-blur-md border-none md:border md:border-white/10 shadow-none md:shadow-[0_10px_30px_rgba(0,0,0,0.8)] rounded-full px-2 md:px-3 py-2 flex items-center justify-between gap-2 font-mono overflow-hidden">
               
               {/* Category Pills Switcher - Centered */}
               <div className="flex items-center justify-center gap-1.5 overflow-x-auto hide-scrollbar mx-auto flex-1">
@@ -647,7 +647,7 @@ function DarkroomContent() {
                       className={`text-[10px] md:text-[11px] px-3 py-1 rounded-full uppercase tracking-wider transition-all whitespace-nowrap border ${
                         isActive
                           ? "bg-red-600 text-white border-red-500 font-bold shadow-[0_0_12px_rgba(239,68,68,0.5)]"
-                          : "bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
+                          : "bg-black/80 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700 backdrop-blur-sm"
                       }`}
                     >
                       {item.label}
@@ -668,7 +668,7 @@ function DarkroomContent() {
 
               {/* Laser Progress Line at bottom of bar */}
               <div
-                className="absolute bottom-0 left-0 h-[2px] bg-red-600 shadow-[0_0_8px_rgba(239,68,68,0.9)] transition-all duration-150 ease-out pointer-events-none"
+                className="hidden md:block absolute bottom-0 left-0 h-[2px] bg-red-600 shadow-[0_0_8px_rgba(239,68,68,0.9)] transition-all duration-150 ease-out pointer-events-none"
                 style={{ width: `${scrollPercent}%` }}
               />
             </div>
