@@ -498,7 +498,7 @@ function DarkroomContent() {
 
       {(!isMobile || !currentCategory) && !leftZoneHovered && <div ref={cursorRef} className="custom-cursor" />}
 
-      {(currentCategory || selectedImage) && (
+      {!loading && (currentCategory || selectedImage) && (
         <>
           <div className="hidden md:block fixed top-0 left-0 w-32 xl:w-48 h-full z-[250] cursor-none"
             onMouseEnter={() => setLeftZoneHovered(true)} onMouseLeave={() => setLeftZoneHovered(false)}
@@ -639,7 +639,7 @@ function DarkroomContent() {
           </div>
           
           {/* FLOATING DARKROOM NAVIGATION & PROGRESS CONTROL BAR */}
-          {currentCategory && currentCategory !== "KONTAKT" && (
+          {!loading && currentCategory && currentCategory !== "KONTAKT" && (
             <div className="fixed bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 z-[150] w-[94%] max-w-xl bg-transparent md:bg-black/85 backdrop-blur-none md:backdrop-blur-md border-none md:border md:border-white/10 shadow-none md:shadow-[0_10px_30px_rgba(0,0,0,0.8)] rounded-full px-2 md:px-3 py-2 flex items-center justify-between gap-2 font-mono overflow-hidden">
               
               {/* Category Pills Switcher - Centered */}
