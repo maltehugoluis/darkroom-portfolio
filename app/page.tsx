@@ -551,48 +551,55 @@ function DarkroomContent() {
           </div>
           
           {/* FLOATING DARKROOM NAVIGATION & PROGRESS CONTROL BAR */}
-          {currentCategory && currentCategory !== "KONTAKT" && (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] w-[92%] max-w-xl bg-black/80 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] rounded-full px-4 py-2 flex items-center justify-between gap-3 font-mono overflow-hidden">
-              
-              {/* Category Pills Switcher */}
-              <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
-                {MENU.filter(m => m.id !== "kontakt").map((item) => {
-                  const isActive = currentCategory === item.label;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        if (!isActive) selectCategory(item.label);
-                      }}
-                      className={`text-[10px] md:text-[11px] px-3 py-1 rounded-full uppercase tracking-wider transition-all whitespace-nowrap border ${
-                        isActive
-                          ? "bg-red-600 text-white border-red-500 font-bold shadow-[0_0_12px_rgba(239,68,68,0.5)]"
-                          : "bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Frame Counter */}
-              {images.length > 0 && (
-                <div className="hidden sm:flex items-center gap-2 shrink-0 text-[10px] md:text-[11px] text-zinc-400 tracking-widest uppercase pl-2">
-                  <span className="text-zinc-700">|</span>
-                  <span>
-                    FRAME <span className="text-red-500 font-bold">{String(currentFrameIndex).padStart(2, '0')}</span> / {String(images.length).padStart(2, '0')}
-                  </span>
+          <AnimatePresence>
+            {!loading && currentCategory && currentCategory !== "KONTAKT" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, x: "-50%" }}
+                animate={{ opacity: 1, y: 0, x: "-50%" }}
+                exit={{ opacity: 0, y: 20, x: "-50%" }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="fixed bottom-6 left-1/2 z-[150] w-[92%] max-w-xl bg-black/80 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] rounded-full px-4 py-2 flex items-center justify-between gap-3 font-mono overflow-hidden"
+              >
+                {/* Category Pills Switcher */}
+                <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+                  {MENU.filter(m => m.id !== "kontakt").map((item) => {
+                    const isActive = currentCategory === item.label;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          if (!isActive) selectCategory(item.label);
+                        }}
+                        className={`text-[10px] md:text-[11px] px-3 py-1 rounded-full uppercase tracking-wider transition-all whitespace-nowrap border ${
+                          isActive
+                            ? "bg-red-600 text-white border-red-500 font-bold shadow-[0_0_12px_rgba(239,68,68,0.5)]"
+                            : "bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
 
-              {/* Laser Progress Line at bottom of bar */}
-              <div
-                className="absolute bottom-0 left-0 h-[2px] bg-red-600 shadow-[0_0_8px_rgba(239,68,68,0.9)] transition-all duration-150 ease-out pointer-events-none"
-                style={{ width: `${scrollPercent}%` }}
-              />
-            </div>
-          )}
+                {/* Frame Counter */}
+                {images.length > 0 && (
+                  <div className="hidden sm:flex items-center gap-2 shrink-0 text-[10px] md:text-[11px] text-zinc-400 tracking-widest uppercase pl-2">
+                    <span className="text-zinc-700">|</span>
+                    <span>
+                      FRAME <span className="text-red-500 font-bold">{String(currentFrameIndex).padStart(2, '0')}</span> / {String(images.length).padStart(2, '0')}
+                    </span>
+                  </div>
+                )}
+
+                {/* Laser Progress Line at bottom of bar */}
+                <div
+                  className="absolute bottom-0 left-0 h-[2px] bg-red-600 shadow-[0_0_8px_rgba(239,68,68,0.9)] transition-all duration-150 ease-out pointer-events-none"
+                  style={{ width: `${scrollPercent}%` }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
 
