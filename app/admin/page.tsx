@@ -400,9 +400,13 @@ export default function AdminPage() {
           });
 
         if (uploadErr) {
-          console.warn("Storage upload failed, trying public URL fallback or continuing...", uploadErr);
-          if (!formUrlInput) {
-            throw new Error(`Upload in Storage-Bucket fehlgeschlagen: ${uploadErr.message}. Bitte überprüfe den Supabase Storage-Bucket 'images' oder verwende eine direkte Bild-URL.`);
+          console.error("Storage upload error:", uploadErr);
+          if (uploadErr.message?.includes("not found") || uploadErr.message?.includes("Bucket")) {
+            throw new Error(`Storage-Bucket 'images' existiert nicht in Supabase. Bitte erstelle den Bucket 'images' unter Supabase Storage!`);
+          } else if (uploadErr.message?.includes("row-level security") || uploadErr.message?.includes("security policy")) {
+            throw new Error(`Storage RLS-Sperre: Bitte füge eine INSERT-Policy für den Storage Bucket 'images' in Supabase hinzu!`);
+          } else if (!formUrlInput) {
+            throw new Error(`Upload fehlgeschlagen: ${uploadErr.message}`);
           }
         } else {
           const { data: publicUrlData } = supabase.storage
@@ -434,14 +438,20 @@ export default function AdminPage() {
           .update(payload)
           .eq("id", editingImage.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Database update error:", error);
+          throw new Error(`Datenbank-Fehler beim Aktualisieren: ${error.message}`);
+        }
         showStatus(`BILD ERFOLGREICH AKTUALISIERT${compressionNotice}`, "success");
       } else {
         // Insert new record
         const { error } = await supabase.from("images").insert([payload]);
 
-        if (error) throw error;
-        showStatus(`NEUES BILD ERFOLGREICH SPEICHERT & IN WEBP KOMPRIMIERT${compressionNotice}`, "success");
+        if (error) {
+          console.error("Database insert error:", error);
+          throw new Error(`Datenbank-Fehler beim Einfügen (RLS prüfen): ${error.message}`);
+        }
+        showStatus(`NEUES BILD ERFOLGREICH GESPEICHERT & IN WEBP KOMPRIMIERT${compressionNotice}`, "success");
       }
 
       setShowAddModal(false);
