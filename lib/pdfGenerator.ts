@@ -14,22 +14,34 @@ interface LoadedImageData {
   aspectRatio: number;
 }
 
-// Convert image URL to Base64 JPEG data string safely while recording aspect ratio
-function loadImgData(url: string): Promise<LoadedImageData | null> {
+// Convert image URL to Base64 JPEG data string safely while downscaling for compact PDF size (~12MB total)
+function loadImgData(url: string, maxDim: number = 1000): Promise<LoadedImageData | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "Anonymous";
     img.onload = () => {
-      const w = img.naturalWidth || img.width || 800;
-      const h = img.naturalHeight || img.height || 600;
+      let w = img.naturalWidth || img.width || 800;
+      let h = img.naturalHeight || img.height || 600;
+
+      // Downscale to maxDim (1000px) for ultra-compact PDF file size (~120KB per photo)
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = Math.round((h * maxDim) / w);
+          w = maxDim;
+        } else {
+          w = Math.round((w * maxDim) / h);
+          h = maxDim;
+        }
+      }
+
       const canvas = document.createElement("canvas");
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, w, h);
         try {
-          const base64 = canvas.toDataURL("image/jpeg", 0.85);
+          const base64 = canvas.toDataURL("image/jpeg", 0.65);
           resolve({ base64, aspectRatio: w / h });
         } catch {
           resolve(null);
@@ -78,10 +90,11 @@ export async function generatePortfolioPDF(
     day: "numeric",
   });
 
-  // Count category statistics
+  // Count category statistics (normalized)
   const catStats: Record<string, number> = {};
   sortedImages.forEach((img) => {
-    const c = (img.category || "DIVERSES").toUpperCase();
+    let c = (img.category || "DIVERSES").trim().toUpperCase();
+    if (c === "PEROSNEN") c = "PERSONEN";
     catStats[c] = (catStats[c] || 0) + 1;
   });
 
@@ -113,27 +126,29 @@ export async function generatePortfolioPDF(
   doc.setLineWidth(0.8);
   doc.line(20, 50, pageWidth - 20, 50);
 
-  // Left Column: Artist Statement Box (20mm to 160mm)
+  // Left Column: Artist Statement Box (20mm to 165mm)
   doc.setFont("courier", "bold");
   doc.setFontSize(11);
   doc.setTextColor(220, 38, 38);
-  doc.text("[ ARTIST STATEMENT & ARCHIV-ÜBERSICHT ]", 20, 62);
+  doc.text("[ ARTIST STATEMENT & ARCHIV ]", 20, 62);
 
   doc.setFont("courier", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(212, 212, 216);
 
   const statementLines = [
     "Willkommen im fotografischen Archiv von Malte Breuer.",
     "",
-    "Dieses Portfolio beinhaltet eine kuratierte Auswahl visueller Arbeiten aus den Bereichen",
-    "Events, Landschafts-Fotografie, Street Photography und Portraits.",
+    "Dieses Portfolio beinhaltet eine kuratierte Auswahl",
+    "visueller Arbeiten aus den Bereichen Events,",
+    "Landschafts-Fotografie, Street & Portraits.",
     "",
-    "Der künstlerische Fokus liegt auf der authentischen Einfangung von Lichtstimmungen,",
-    "gezielten Schattenkontrasten und präzisen bildgestalterischen Kompositionen.",
+    "Der künstlerische Fokus liegt auf authentischen",
+    "Lichtstimmungen, präzisen Schattenkontrasten",
+    "und klaren bildgestalterischen Kompositionen.",
     "",
-    "Verwendete Systeme umfassen sowohl hochauflösende moderne Sensoren als auch analoge",
-    "35mm-Formate aus den Archiven 2024 bis 2026."
+    "Verwendete Systeme umfassen moderne Vollformat-",
+    "Sensoren sowie analoge 35mm-Formate."
   ];
 
   let lineY = 72;
@@ -142,36 +157,36 @@ export async function generatePortfolioPDF(
     lineY += 5.5;
   });
 
-  // Right Column: Metadata & Contact Details Box (175mm to 277mm)
-  const metaX = 175;
+  // Right Column: Metadata & Contact Details Box (182mm to 277mm)
+  const metaX = 182;
   doc.setFont("courier", "bold");
   doc.setFontSize(11);
   doc.setTextColor(220, 38, 38);
   doc.text("[ KONTAKT & METADATEN ]", metaX, 62);
 
   doc.setFont("courier", "normal");
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
 
   let metaY = 72;
   const metaItems = [
     { label: "FOTOGRAF:", value: "Malte Breuer" },
     { label: "E-MAIL:", value: "breuermalte@icloud.com" },
     { label: "INSTAGRAM:", value: "@mhlensvisuals" },
-    { label: "STANDORT:", value: "Wuppertal / Deutschland" },
+    { label: "STANDORT:", value: "Wuppertal / GER" },
     { label: "DATUM:", value: today },
-    { label: "BELICHTUNGEN:", value: `${sortedImages.length} Kuratierte Werke` },
+    { label: "WERKE:", value: `${sortedImages.length} Belichtungen` },
   ];
 
   metaItems.forEach((item) => {
     doc.setTextColor(113, 113, 122);
     doc.text(item.label, metaX, metaY);
     doc.setTextColor(255, 255, 255);
-    doc.text(item.value, metaX + 32, metaY);
-    metaY += 7;
+    doc.text(item.value, metaX + 34, metaY);
+    metaY += 6.5;
   });
 
   // Category Distribution Stats Box
-  metaY += 5;
+  metaY += 4;
   doc.setFont("courier", "bold");
   doc.setFontSize(9);
   doc.setTextColor(220, 38, 38);
@@ -185,7 +200,7 @@ export async function generatePortfolioPDF(
     doc.text(`• ${catName}:`, metaX + 2, metaY);
     doc.setTextColor(255, 255, 255);
     doc.text(`${count} Bild${count > 1 ? "er" : ""}`, metaX + 38, metaY);
-    metaY += 5.5;
+    metaY += 5;
   });
 
   // Cover Footer
