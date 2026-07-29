@@ -58,7 +58,8 @@ function DarkroomContent() {
   const [leftZoneHovered, setLeftZoneHovered] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
   const [markerProgress, setMarkerProgress] = useState<Record<number, number>>({});
-  
+  const [scrollPercent, setScrollPercent] = useState<number>(0);
+  const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(1);
   const stateDepth = useRef(0);
 
   // Hintergrund-Preload für alle Kategorien
@@ -144,6 +145,8 @@ function DarkroomContent() {
 
   useEffect(() => {
     setLeftZoneHovered(false);
+    setScrollPercent(0);
+    setCurrentFrameIndex(1);
     if (scrollContainerRef.current) scrollContainerRef.current.scrollLeft = 0;
   }, [currentCategory]);
 
@@ -478,11 +481,19 @@ function DarkroomContent() {
       ) : (
         <>
           <div ref={scrollContainerRef} onScroll={() => {
-            if (scrubberRef.current && scrollContainerRef.current) {
+            if (scrollContainerRef.current) {
               const el = scrollContainerRef.current;
               const maxScroll = el.scrollWidth - el.clientWidth;
-              const progress = maxScroll > 0 ? el.scrollLeft / maxScroll : 0;
-              scrubberRef.current.style.left = `calc(${progress * 100}% - ${progress * 0.75}rem)`;
+              const progress = maxScroll > 0 ? (el.scrollLeft / maxScroll) * 100 : 0;
+              setScrollPercent(Math.min(100, Math.max(0, progress)));
+              
+              if (images.length > 0) {
+                const approxIndex = Math.min(
+                  images.length,
+                  Math.max(1, Math.round((el.scrollLeft / Math.max(1, maxScroll)) * (images.length - 1)) + 1)
+                );
+                setCurrentFrameIndex(approxIndex);
+              }
             }
           }} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
             <div className="w-full md:w-auto flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-0 md:pl-[15vw]">
@@ -539,41 +550,47 @@ function DarkroomContent() {
             </div>
           </div>
           
-          {/* Zeitleiste (Timeline) - Nur auf dem PC sichtbar und ab > 1 Prio-Level */}
-          {!isMobile && !isShortScreen && uniquePrios.length > 1 && (
-            <div className="fixed bottom-12 left-1/2 -translate-x-1/2 w-1/3 max-w-lg z-[150] block opacity-30 hover:opacity-100 transition-opacity duration-500 h-8 group">
-              <div className="absolute top-1/2 left-0 w-full h-[1px] bg-zinc-700 -translate-y-1/2 pointer-events-none z-0" />
+          {/* FLOATING DARKROOM NAVIGATION & PROGRESS CONTROL BAR */}
+          {currentCategory && currentCategory !== "KONTAKT" && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] w-[92%] max-w-xl bg-black/80 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] rounded-full px-4 py-2 flex items-center justify-between gap-3 font-mono overflow-hidden">
               
-              {/* Beweglicher Punkt (Scrubber) */}
-              <div 
-                ref={scrubberRef}
-                className="absolute top-1/2 w-3 h-3 bg-red-600 rounded-full -translate-y-1/2 shadow-[0_0_15px_rgba(220,38,38,0.8)] pointer-events-none z-20 will-change-[left]"
-                style={{ left: '0%' }}
-              />
+              {/* Category Pills Switcher */}
+              <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+                {MENU.filter(m => m.id !== "kontakt").map((item) => {
+                  const isActive = currentCategory === item.label;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        if (!isActive) selectCategory(item.label);
+                      }}
+                      className={`text-[10px] md:text-[11px] px-3 py-1 rounded-full uppercase tracking-wider transition-all whitespace-nowrap border ${
+                        isActive
+                          ? "bg-red-600 text-white border-red-500 font-bold shadow-[0_0_12px_rgba(239,68,68,0.5)]"
+                          : "bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
 
-              {uniquePrios.map((prio, index) => {
-                // Optischer Fallback beim allerersten Laden (verteilt die Punkte gleichmäßig, bevor sie korrigiert werden)
-                const defaultProgress = uniquePrios.length > 1 ? index / (uniquePrios.length - 1) : 0;
-                const progress = markerProgress[prio] !== undefined ? markerProgress[prio] : defaultProgress;
-                
-                return (
-                  <button
-                    key={prio}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      playClickSound();
-                      const el = document.getElementById(`prio-section-${prio}`);
-                      const container = scrollContainerRef.current;
-                      if (el && container) {
-                        const offset = el.offsetLeft - (window.innerWidth / 2) + (el.clientWidth / 2);
-                        container.scrollTo({ left: offset, behavior: 'auto' });
-                      }
-                    }}
-                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-500 hover:bg-red-600 hover:scale-150 hover:shadow-[0_0_15px_rgba(220,38,38,0.8)] transition-all duration-300 outline-none z-10"
-                    style={{ left: `calc(${progress * 100}% - ${progress * 0.75}rem)` }}
-                  />
-                );
-              })}
+              {/* Frame Counter */}
+              {images.length > 0 && (
+                <div className="hidden sm:flex items-center gap-2 shrink-0 text-[10px] md:text-[11px] text-zinc-400 tracking-widest uppercase pl-2">
+                  <span className="text-zinc-700">|</span>
+                  <span>
+                    FRAME <span className="text-red-500 font-bold">{String(currentFrameIndex).padStart(2, '0')}</span> / {String(images.length).padStart(2, '0')}
+                  </span>
+                </div>
+              )}
+
+              {/* Laser Progress Line at bottom of bar */}
+              <div
+                className="absolute bottom-0 left-0 h-[2px] bg-red-600 shadow-[0_0_8px_rgba(239,68,68,0.9)] transition-all duration-150 ease-out pointer-events-none"
+                style={{ width: `${scrollPercent}%` }}
+              />
             </div>
           )}
         </>
