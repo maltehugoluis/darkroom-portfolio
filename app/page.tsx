@@ -60,7 +60,9 @@ function DarkroomContent() {
   const [markerProgress, setMarkerProgress] = useState<Record<number, number>>({});
   const [scrollPercent, setScrollPercent] = useState<number>(0);
   const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(1);
+  const [isCategoryFading, setIsCategoryFading] = useState<boolean>(false);
   const stateDepth = useRef(0);
+  const categoryCacheRef = useRef<Record<string, any[]>>({});
 
   // Hintergrund-Preload für alle Kategorien
   useEffect(() => {
@@ -244,13 +246,20 @@ function DarkroomContent() {
       setLoading(true);
 
       if (label !== "KONTAKT") {
-        const { data } = await supabase
-          .from('images')
-          .select('*')
-          .eq('category', label)
-          .order('prio', { ascending: true })
-          .order('created_at', { ascending: false });
-        if (data) setImages(data);
+        let categoryData = categoryCacheRef.current[label];
+        if (!categoryData) {
+          const { data } = await supabase
+            .from('images')
+            .select('*')
+            .eq('category', label)
+            .order('prio', { ascending: true })
+            .order('created_at', { ascending: false });
+          if (data) {
+            categoryData = data;
+            categoryCacheRef.current[label] = data;
+          }
+        }
+        if (categoryData) setImages(categoryData);
       }
 
       setTimeout(() => { 
@@ -260,26 +269,41 @@ function DarkroomContent() {
         window.history.pushState({ category: label }, '', '/');
       }, 1500);
     } else {
-      // Direkter, sofortiger Wechsel über die Control Bar ohne Loading Screen
-      setCurrentCategory(label);
-      setScrollPercent(0);
-      setCurrentFrameIndex(1);
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollLeft = 0;
-      }
+      // Nahtloser Micro-Fade-Wechsel über die Control Bar ohne Ruckeln
+      setIsCategoryFading(true);
 
-      if (label !== "KONTAKT") {
+      let categoryData = categoryCacheRef.current[label];
+      if (!categoryData && label !== "KONTAKT") {
         const { data } = await supabase
           .from('images')
           .select('*')
           .eq('category', label)
           .order('prio', { ascending: true })
           .order('created_at', { ascending: false });
-        if (data) setImages(data);
+        if (data) {
+          categoryData = data;
+          categoryCacheRef.current[label] = data;
+        }
       }
 
-      stateDepth.current += 1;
-      window.history.pushState({ category: label }, '', '/');
+      // Kurzer 120ms Shutter-Wechsel: Kategorie & Bilder zeitgleich und synchron tauschen
+      setTimeout(() => {
+        if (categoryData) setImages(categoryData);
+        setCurrentCategory(label);
+        setScrollPercent(0);
+        setCurrentFrameIndex(1);
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollLeft = 0;
+        }
+
+        stateDepth.current += 1;
+        window.history.pushState({ category: label }, '', '/');
+
+        // Sanftes Einblenden der neuen Kategorie und Bilder synchron
+        requestAnimationFrame(() => {
+          setTimeout(() => setIsCategoryFading(false), 50);
+        });
+      }, 120);
     }
   };
 
@@ -518,7 +542,9 @@ function DarkroomContent() {
                 setCurrentFrameIndex(approxIndex);
               }
             }
-          }} className="h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black">
+          }} className={`h-full w-full overflow-y-auto md:overflow-y-hidden md:overflow-x-auto flex flex-col md:flex-row items-center hide-scrollbar relative bg-black transition-all duration-200 ease-out ${
+            isCategoryFading ? "opacity-0 scale-[0.98] blur-[2px]" : "opacity-100 scale-100 blur-0"
+          }`}>
             <div className="w-full md:w-auto flex flex-col md:flex-row gap-8 md:gap-16 items-center justify-start pb-40 md:pb-0 px-8 md:px-0 md:pl-[15vw]">
               <div className="flex-shrink-0 pt-6 pb-0 md:py-0 md:mr-20 flex items-center justify-center font-mono">
                 <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)]">{currentCategory}</h1>
