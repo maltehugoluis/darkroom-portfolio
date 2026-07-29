@@ -391,28 +391,42 @@ export default function AdminPage() {
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.webp`;
         const filePath = `${formCategory.toLowerCase()}/${fileName}`;
 
-        // Upload compressed webp file to Supabase storage 'images' bucket
-        const { error: uploadErr } = await supabase.storage
-          .from("images")
-          .upload(filePath, fileToUpload, {
-            contentType: "image/webp",
-            upsert: true,
-          });
+        // Try uploading to 'Portfolio', 'portfolio', or 'images' bucket
+        const bucketsToTry = ["Portfolio", "portfolio", "images"];
+        let uploadSuccess = false;
+        let lastUploadErr: any = null;
 
-        if (uploadErr) {
-          console.error("Storage upload error:", uploadErr);
-          if (uploadErr.message?.includes("not found") || uploadErr.message?.includes("Bucket")) {
-            throw new Error(`Storage-Bucket 'images' existiert nicht in Supabase. Bitte erstelle den Bucket 'images' unter Supabase Storage!`);
-          } else if (uploadErr.message?.includes("row-level security") || uploadErr.message?.includes("security policy")) {
-            throw new Error(`Storage RLS-Sperre: Bitte füge eine INSERT-Policy für den Storage Bucket 'images' in Supabase hinzu!`);
-          } else if (!formUrlInput) {
-            throw new Error(`Upload fehlgeschlagen: ${uploadErr.message}`);
+        for (const bucketName of bucketsToTry) {
+          const { error: uploadErr } = await supabase.storage
+            .from(bucketName)
+            .upload(filePath, fileToUpload, {
+              contentType: "image/webp",
+              upsert: true,
+            });
+
+          if (!uploadErr) {
+            const { data: publicUrlData } = supabase.storage
+              .from(bucketName)
+              .getPublicUrl(filePath);
+            finalUrl = publicUrlData.publicUrl;
+            uploadSuccess = true;
+            break;
           }
-        } else {
-          const { data: publicUrlData } = supabase.storage
-            .from("images")
-            .getPublicUrl(filePath);
-          finalUrl = publicUrlData.publicUrl;
+
+          lastUploadErr = uploadErr;
+          // If error is RLS related rather than bucket missing, break & report
+          if (uploadErr.message?.includes("security policy") || uploadErr.message?.includes("row-level security")) {
+            break;
+          }
+        }
+
+        if (!uploadSuccess) {
+          console.error("Storage upload error:", lastUploadErr);
+          if (lastUploadErr?.message?.includes("security policy") || lastUploadErr?.message?.includes("row-level security")) {
+            throw new Error(`Storage RLS-Sperre: Bitte füge eine INSERT-Policy für den Bucket 'Portfolio' in Supabase Storage hinzu!`);
+          } else if (!formUrlInput) {
+            throw new Error(`Upload in Storage-Bucket 'Portfolio' fehlgeschlagen: ${lastUploadErr?.message || "Bucket nicht gefunden"}.`);
+          }
         }
       }
 
@@ -469,12 +483,16 @@ export default function AdminPage() {
     if (!deleteTarget) return;
     playClickSound();
     try {
-      // 1. If stored in Supabase Storage, attempt deleting file from bucket
-      if (deleteTarget.url && deleteTarget.url.includes("/storage/v1/object/public/images/")) {
-        const parts = deleteTarget.url.split("/storage/v1/object/public/images/");
-        if (parts[1]) {
-          const filePath = parts[1];
-          await supabase.storage.from("images").remove([filePath]);
+      // 1. If stored in Supabase Storage, attempt deleting file from bucket dynamically
+      if (deleteTarget.url && deleteTarget.url.includes("/storage/v1/object/public/")) {
+        const pathAfterPublic = deleteTarget.url.split("/storage/v1/object/public/")[1];
+        if (pathAfterPublic) {
+          const pathSegments = pathAfterPublic.split("/");
+          const bucket = pathSegments[0];
+          const filePath = pathSegments.slice(1).join("/");
+          if (bucket && filePath) {
+            await supabase.storage.from(bucket).remove([filePath]);
+          }
         }
       }
 
