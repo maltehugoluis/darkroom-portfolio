@@ -121,6 +121,8 @@ export default function AdminPage() {
     };
   }, []);
 
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
   // Check auth session
   useEffect(() => {
     const sessionAuth = sessionStorage.getItem("darkroom_admin_auth");
@@ -128,6 +130,27 @@ export default function AdminPage() {
       setIsAuthenticated(true);
     }
   }, []);
+
+  const handleAdminDownloadPDF = async () => {
+    playClickSound();
+    setIsGeneratingPDF(true);
+    try {
+      const { data } = await supabase
+        .from("images")
+        .select("*")
+        .order("prio", { ascending: true })
+        .order("created_at", { ascending: false });
+
+      const { generatePortfolioPDF } = await import("@/lib/pdfGenerator");
+      await generatePortfolioPDF(data || []);
+      showStatus("KUNDEN-PDF ERFOLGREICH BELICHTET UND HERUNTERGELADEN", "success");
+    } catch (err: any) {
+      console.error("PDF generation error:", err);
+      showStatus(`FEHLER BEIM ERSTELLEN DES PDF: ${err.message || "Unbekannter Fehler"}`, "error");
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   // Load images when category changes or authenticated
   useEffect(() => {
@@ -642,7 +665,16 @@ export default function AdminPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleAdminDownloadPDF}
+            disabled={isGeneratingPDF}
+            className="bg-zinc-900 hover:bg-zinc-800 text-red-500 hover:text-red-400 text-xs tracking-widest uppercase px-3.5 py-2.5 rounded-sm border border-red-900/40 transition-colors flex items-center gap-2 disabled:opacity-50"
+            title="Kunden-PDF Portfolio Deck generieren"
+          >
+            <span>{isGeneratingPDF ? "⏳" : "📄"}</span>
+            <span>{isGeneratingPDF ? "PDF..." : "KUNDEN-PDF ERSTELLEN"}</span>
+          </button>
           <button
             onClick={openAddModal}
             className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-sm transition-colors shadow-lg border border-red-400/30 flex items-center gap-2"

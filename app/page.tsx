@@ -61,6 +61,8 @@ function DarkroomContent() {
   const [scrollPercent, setScrollPercent] = useState<number>(0);
   const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(1);
   const [isCategoryFading, setIsCategoryFading] = useState<boolean>(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
+  const [pdfProgressText, setPdfProgressText] = useState<string>("");
   const stateDepth = useRef(0);
   const categoryCacheRef = useRef<Record<string, any[]>>({});
 
@@ -359,6 +361,29 @@ function DarkroomContent() {
     setSelectedImage(images[nextIndex].url);
   };
 
+  const handleDownloadPDF = async () => {
+    playClickSound();
+    setIsGeneratingPDF(true);
+    setPdfProgressText("Bilder werden belichtet...");
+
+    try {
+      const { data } = await supabase
+        .from('images')
+        .select('*')
+        .order('prio', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      const allImages = data || [];
+      const { generatePortfolioPDF } = await import("@/lib/pdfGenerator");
+      await generatePortfolioPDF(allImages, (txt) => setPdfProgressText(txt));
+    } catch (e) {
+      console.error("PDF generation failed:", e);
+    } finally {
+      setIsGeneratingPDF(false);
+      setPdfProgressText("");
+    }
+  };
+
   // Cursor und Canvas-Freikratzen
   useEffect(() => {
     let rafId: number | null = null;
@@ -550,10 +575,20 @@ function DarkroomContent() {
           <Link href="/about?from=kontakt" onClick={playClickSound} className="block cursor-pointer outline-none">
             <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">SAY HELLO</h1>
           </Link>
-          <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
+          <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-16 font-mono">
             <a href="mailto:breuermalte@icloud.com" onClick={playClickSound} 
               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">breuermalte@icloud.com</a>
             <a href="https://www.instagram.com/mhlensvisuals" target="_blank" rel="noopener noreferrer" onClick={playClickSound} className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">INSTAGRAM</a>
+            
+            <button
+              type="button"
+              disabled={isGeneratingPDF}
+              onClick={handleDownloadPDF}
+              className="mt-4 px-6 py-2.5 rounded-full border border-red-900/60 bg-red-950/40 hover:bg-red-900 hover:border-red-500 text-red-500 hover:text-white font-mono text-[11px] md:text-xs tracking-[0.2em] uppercase transition-all duration-300 shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+            >
+              <span>{isGeneratingPDF ? "⏳" : "📥"}</span>
+              <span>{isGeneratingPDF ? (pdfProgressText || "PDF WIRD BELICHTET...") : "PORTFOLIO PDF DOWNLOAD"}</span>
+            </button>
           </div>
           <div className="absolute bottom-40 md:bottom-10 left-0 w-full px-6 flex flex-col items-center gap-5">
             <div className="flex gap-8">
