@@ -45,6 +45,9 @@ function loadImgData(url: string): Promise<LoadedImageData | null> {
 
 const CATEGORY_ORDER = ["EVENTS", "LANDSCHAFT", "STREET", "PERSONEN", "ME"];
 
+// Dynamic photobook pattern sequence prioritizing 4 and 3 images per page
+const PAGE_PATTERN_SEQUENCE = [4, 3, 4, 2, 4, 3, 1, 4, 3, 4, 2];
+
 export async function generatePortfolioPDF(
   images: PDFImageItem[],
   onProgress?: (progressText: string) => void
@@ -103,7 +106,7 @@ export async function generatePortfolioPDF(
 
   doc.setTextColor(220, 38, 38);
   doc.setFontSize(13);
-  doc.text("PHOTOGRAPHY & VISUAL ARTS — SELECTION DECK", 20, 44);
+  doc.text("PHOTOGRAPHY & VISUAL ARTS — PHOTOBOOK DECK", 20, 44);
 
   // Red Divider Line
   doc.setDrawColor(220, 38, 38);
@@ -207,13 +210,88 @@ export async function generatePortfolioPDF(
   }
 
   // ----------------------------------------------------
-  // EDITORIAL GRID PAGES (2 IMAGES PER PAGE)
+  // DYNAMIC PHOTOBOOK PAGES (4, 3, 2, 1 VARYING LAYOUTS)
   // ----------------------------------------------------
-  const itemsPerPage = 2;
-  const totalGridPages = Math.ceil(preloadedImages.length / itemsPerPage);
+  let imgIndex = 0;
+  let pageNumber = 2;
+  let patternIdx = 0;
 
-  for (let pageIdx = 0; pageIdx < totalGridPages; pageIdx++) {
-    if (onProgress) onProgress(`Erstelle Dokumentenseite ${pageIdx + 2} von ${totalGridPages + 1}...`);
+  // Helper renderer for an individual photo slot cell
+  const renderSlot = (
+    cellX: number,
+    cellY: number,
+    cellW: number,
+    cellH: number,
+    slotData: { item: PDFImageItem; data: LoadedImageData | null }
+  ) => {
+    const { item, data } = slotData;
+
+    // Dark card background
+    doc.setFillColor(18, 18, 18);
+    doc.setDrawColor(38, 38, 38);
+    doc.setLineWidth(0.3);
+    doc.rect(cellX, cellY, cellW, cellH, "FD");
+
+    if (data && data.base64) {
+      try {
+        const padding = 5;
+        const maxW = cellW - padding * 2;
+        const maxH = cellH - padding * 2 - 6; // Leave room for metadata line below
+
+        let imgW = maxW;
+        let imgH = imgW / data.aspectRatio;
+
+        if (imgH > maxH) {
+          imgH = maxH;
+          imgW = imgH * data.aspectRatio;
+        }
+
+        const drawX = cellX + (cellW - imgW) / 2;
+        const drawY = cellY + padding + (maxH - imgH) / 2;
+
+        doc.addImage(data.base64, "JPEG", drawX, drawY, imgW, imgH, undefined, "FAST");
+
+        // Red corner crop marks
+        doc.setDrawColor(220, 38, 38);
+        doc.setLineWidth(0.4);
+        doc.line(drawX, drawY, drawX + 3, drawY);
+        doc.line(drawX, drawY, drawX, drawY + 3);
+        doc.line(drawX + imgW, drawY + imgH, drawX + imgW - 3, drawY + imgH);
+        doc.line(drawX + imgW, drawY + imgH, drawX + imgW, drawY + imgH - 3);
+
+        // Metadata line under photo
+        const metaY = cellY + cellH - 3;
+        doc.setFont("courier", "bold");
+        doc.setFontSize(7.5);
+        doc.setTextColor(220, 38, 38);
+        doc.text(`[${item.category || "WERK"}]`, cellX + 3, metaY);
+
+        doc.setFont("courier", "normal");
+        doc.setFontSize(6.5);
+        doc.setTextColor(212, 212, 216);
+
+        const locText = (item.location || "N/A").toUpperCase();
+        const camText = (item.camera_model || "LEICA/ANALOG").toUpperCase();
+        const yearText = item.year || "2026";
+        doc.text(`${locText} • ${camText} • ${yearText}`, cellX + 28, metaY);
+      } catch (e) {
+        console.error("Error drawing image in PDF:", e);
+      }
+    }
+  };
+
+  while (imgIndex < preloadedImages.length) {
+    const remaining = preloadedImages.length - imgIndex;
+    const targetCount = PAGE_PATTERN_SEQUENCE[patternIdx % PAGE_PATTERN_SEQUENCE.length];
+    patternIdx++;
+
+    const countOnThisPage = Math.min(targetCount, remaining);
+    const pageItems = preloadedImages.slice(imgIndex, imgIndex + countOnThisPage);
+    imgIndex += countOnThisPage;
+
+    if (onProgress) {
+      onProgress(`Erstelle Magazinseite ${pageNumber} (${countOnThisPage} Bilder)...`);
+    }
 
     doc.addPage("a4", "landscape");
 
@@ -225,101 +303,117 @@ export async function generatePortfolioPDF(
     doc.setFillColor(220, 38, 38);
     doc.rect(0, 0, pageWidth, 2, "F");
 
-    // Header on image pages
-    const pageItems = preloadedImages.slice(pageIdx * itemsPerPage, (pageIdx + 1) * itemsPerPage);
-    const primaryCategory = (pageItems[0]?.item.category || "PORTFOLIO").toUpperCase();
-
+    // Top Page Header
+    const primaryCat = (pageItems[0]?.item.category || "PORTFOLIO").toUpperCase();
     doc.setFont("courier", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setTextColor(220, 38, 38);
-    doc.text(`MALTE BREUER — ARCHIV: [ ${primaryCategory} ]`, 15, 14);
+    doc.text(`MALTE BREUER — ARCHIV: [ ${primaryCat} ]`, 15, 13);
 
     doc.setFont("courier", "normal");
     doc.setFontSize(8);
     doc.setTextColor(113, 113, 122);
-    doc.text(`SEITE ${pageIdx + 2} VON ${totalGridPages + 1}`, pageWidth - 45, 14);
+    doc.text(`SEITE ${pageNumber}`, pageWidth - 35, 13);
 
     doc.setDrawColor(30, 30, 30);
     doc.setLineWidth(0.3);
-    doc.line(15, 17, pageWidth - 15, 17);
+    doc.line(15, 16, pageWidth - 15, 16);
 
-    // 2-Column Grid Parameters
-    // Column 1: Left X = 15mm, Column 2: Left X = 152mm
-    // Width per column = 130mm, Max Box Height = 145mm
-    const colWidth = 130;
-    const boxHeight = 145;
-    const startY = 25;
+    // Render Page according to image count (4, 3, 2, or 1)
+    if (countOnThisPage === 4) {
+      // 4-UP GRID LAYOUT (2x2 Grid)
+      const slotW = 130;
+      const slotH = 82;
+      const topY1 = 20;
+      const topY2 = 106;
+      const leftX1 = 15;
+      const leftX2 = 152;
 
-    for (let slot = 0; slot < pageItems.length; slot++) {
-      const { item, data } = pageItems[slot];
-      const colX = slot === 0 ? 15 : 152;
+      renderSlot(leftX1, topY1, slotW, slotH, pageItems[0]);
+      if (pageItems[1]) renderSlot(leftX2, topY1, slotW, slotH, pageItems[1]);
+      if (pageItems[2]) renderSlot(leftX1, topY2, slotW, slotH, pageItems[2]);
+      if (pageItems[3]) renderSlot(leftX2, topY2, slotW, slotH, pageItems[3]);
+    } else if (countOnThisPage === 3) {
+      // 3-UP EDITORIAL LAYOUT (1 Hero Left, 2 Right Stacked)
+      const heroW = 132;
+      const heroH = 168;
+      const rightW = 128;
+      const rightH = 82;
 
-      // Draw dark frame box background for image slot
-      doc.setFillColor(18, 18, 18);
-      doc.setDrawColor(38, 38, 38);
-      doc.setLineWidth(0.3);
-      doc.rect(colX, startY, colWidth, boxHeight, "FD");
+      renderSlot(15, 20, heroW, heroH, pageItems[0]);
+      if (pageItems[1]) renderSlot(154, 20, rightW, rightH, pageItems[1]);
+      if (pageItems[2]) renderSlot(154, 106, rightW, rightH, pageItems[2]);
+    } else if (countOnThisPage === 2) {
+      // 2-UP SPREAD LAYOUT (Side by Side)
+      const slotW = 130;
+      const slotH = 168;
+      renderSlot(15, 20, slotW, slotH, pageItems[0]);
+      if (pageItems[1]) renderSlot(152, 20, slotW, slotH, pageItems[1]);
+    } else {
+      // 1-UP HERO EXPOSURE LAYOUT (Large Hero Print with Metadata Sidebar)
+      const heroW = 195;
+      const heroH = 168;
+      renderSlot(15, 20, heroW, heroH, pageItems[0]);
 
-      if (data && data.base64) {
-        try {
-          // STRICT ASPECT RATIO PRESERVATION:
-          // Fit image perfectly inside (colWidth - 8mm) x (boxHeight - 8mm) without stretching
-          const maxW = colWidth - 8;
-          const maxH = boxHeight - 8;
+      // Metadata sidebar on right side
+      const item = pageItems[0].item;
+      const sideX = 218;
 
-          let imgW = maxW;
-          let imgH = imgW / data.aspectRatio;
-
-          if (imgH > maxH) {
-            imgH = maxH;
-            imgW = imgH * data.aspectRatio;
-          }
-
-          // Center image perfectly inside the slot box
-          const drawX = colX + (colWidth - imgW) / 2;
-          const drawY = startY + (boxHeight - imgH) / 2;
-
-          doc.addImage(data.base64, "JPEG", drawX, drawY, imgW, imgH, undefined, "FAST");
-
-          // Red corner crop marks
-          doc.setDrawColor(220, 38, 38);
-          doc.setLineWidth(0.4);
-          doc.line(drawX, drawY, drawX + 3, drawY);
-          doc.line(drawX, drawY, drawX, drawY + 3);
-          doc.line(drawX + imgW, drawY + imgH, drawX + imgW - 3, drawY + imgH);
-          doc.line(drawX + imgW, drawY + imgH, drawX + imgW, drawY + imgH - 3);
-        } catch (e) {
-          console.error("Error drawing image in PDF:", e);
-        }
-      }
-
-      // Metadata section below each image slot (Y = startY + boxHeight + 4mm)
-      const metaY = startY + boxHeight + 5;
       doc.setFont("courier", "bold");
-      doc.setFontSize(8.5);
+      doc.setFontSize(13);
       doc.setTextColor(220, 38, 38);
-      doc.text(`[ ${item.category || "WERK"} ]`, colX, metaY);
+      doc.text(`[ ${item.category || "PORTFOLIO"} ]`, sideX, 35);
+
+      doc.setDrawColor(220, 38, 38);
+      doc.setLineWidth(0.5);
+      doc.line(sideX, 40, pageWidth - 15, 40);
 
       doc.setFont("courier", "normal");
-      doc.setFontSize(7.5);
-      doc.setTextColor(212, 212, 216);
+      doc.setFontSize(8);
+      doc.setTextColor(113, 113, 122);
 
-      const locText = (item.location || "Standort N/A").toUpperCase();
-      const camText = (item.camera_model || "LEICA / ANALOG").toUpperCase();
-      const yearText = item.year || "2026";
+      doc.text("LOCATION", sideX, 55);
+      doc.setFont("courier", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text(item.location || "UNKNOWN LOCATION", sideX, 61);
 
-      doc.text(`${locText} • ${camText} • ${yearText}`, colX, metaY + 4.5);
+      doc.setFont("courier", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(113, 113, 122);
+      doc.text("CAMERA / SENSOR", sideX, 75);
+      doc.setFont("courier", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(220, 38, 38);
+      doc.text(item.camera_model || "LEICA / ANALOG", sideX, 81);
+
+      doc.setFont("courier", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(113, 113, 122);
+      doc.text("YEAR", sideX, 95);
+      doc.setFont("courier", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text(item.year || "2026", sideX, 101);
+
+      const yearSuffix = (item.year || "2026").slice(-2);
+      doc.setFontSize(16);
+      doc.setFont("courier", "bold");
+      doc.setTextColor(40, 40, 40);
+      doc.text(`REF-${yearSuffix}`, sideX, 145);
     }
 
     // Page Footer
     doc.setDrawColor(40, 40, 40);
     doc.setLineWidth(0.2);
-    doc.line(15, pageHeight - 12, pageWidth - 15, pageHeight - 12);
+    doc.line(15, pageHeight - 11, pageWidth - 15, pageHeight - 11);
 
     doc.setFontSize(7);
     doc.setTextColor(113, 113, 122);
-    doc.text("MALTE BREUER — PHOTOGRAPHY PORTFOLIO", 15, pageHeight - 7);
-    doc.text("CONFIDENTIAL PRESENTATION DECK", pageWidth - 70, pageHeight - 7);
+    doc.text("MALTE BREUER — PHOTOGRAPHY PORTFOLIO", 15, pageHeight - 6);
+    doc.text("CONFIDENTIAL PRESENTATION DECK", pageWidth - 70, pageHeight - 6);
+
+    pageNumber++;
   }
 
   // Save PDF
