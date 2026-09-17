@@ -1,11 +1,13 @@
 "use client";
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
-import ChemistryTimer from '@/components/ChemistryTimer';
-import Lightbox from '@/components/Lightbox';
+
+const ChemistryTimer = dynamic(() => import('@/components/ChemistryTimer'), { ssr: false });
+const Lightbox = dynamic(() => import('@/components/Lightbox'), { ssr: false });
 
 const MENU = [
   { id: "events", label: "EVENTS" },
@@ -476,13 +478,16 @@ function DarkroomContent() {
   }, [currentCategory]);
 
   // --- Zeitleisten Vorbereitung (Prios extrahieren) ---
-  const seenPrios = new Set();
-  const annotatedImages = images.map(img => {
-    const isFirstOfPrio = img.prio != null && !seenPrios.has(img.prio);
-    if (isFirstOfPrio) seenPrios.add(img.prio);
-    return { ...img, isFirstOfPrio };
-  });
-  const uniquePrios = Array.from(seenPrios).sort((a: any, b: any) => a - b) as number[];
+  const { annotatedImages, uniquePrios } = useMemo(() => {
+    const seenPrios = new Set();
+    const annotated = images.map(img => {
+      const isFirstOfPrio = img.prio != null && !seenPrios.has(img.prio);
+      if (isFirstOfPrio) seenPrios.add(img.prio);
+      return { ...img, isFirstOfPrio };
+    });
+    const unique = Array.from(seenPrios).sort((a: any, b: any) => a - b) as number[];
+    return { annotatedImages: annotated, uniquePrios: unique };
+  }, [images]);
 
   // Exakte Marker-Positionen der Timeline berechnen
   useEffect(() => {
