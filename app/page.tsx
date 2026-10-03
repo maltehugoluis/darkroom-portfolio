@@ -554,9 +554,9 @@ function DarkroomContent() {
           <div className="h-screen w-screen bg-black" />
         ) : (
           <div className="relative h-full w-full bg-black touch-none flex flex-col">
-            {/* Oben Links: Diskreter 'maltehugoluis' Schriftzug (Schwarz im Ruhezustand, Rot beim Hover) */}
-            <div className="absolute top-6 left-6 md:top-8 md:left-8 z-[50] pointer-events-auto">
-              <span className="font-mono text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-black hover:text-red-600 hover:[text-shadow:0_0_15px_rgba(220,38,38,0.8)] transition-all duration-500 select-none cursor-pointer">
+            {/* Oben Links: 'maltehugoluis' Schriftzug (Weiß, wird durch Canvas verdeckt und durch Kratzen aufgedeckt) */}
+            <div className={`absolute top-6 left-6 md:top-8 md:left-8 z-10 pointer-events-auto transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
+              <span className="font-mono text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-white hover:text-red-600 hover:[text-shadow:0_0_15px_rgba(220,38,38,0.8)] transition-all duration-300 select-none cursor-pointer">
                 maltehugoluis
               </span>
             </div>
