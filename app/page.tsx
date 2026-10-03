@@ -53,6 +53,7 @@ function DarkroomContent() {
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [images, setImages] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [meImageUrl, setMeImageUrl] = useState<string | null>(null);
   
   const [copied, setCopied] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -72,8 +73,8 @@ function DarkroomContent() {
   useEffect(() => {
     const preloadAllCategories = async () => {
       const targetCategories = MENU.filter(m => m.id !== "kontakt").map(m => m.label);
-      await Promise.all(
-        targetCategories.map(async (cat) => {
+      await Promise.all([
+        ...targetCategories.map(async (cat) => {
           const { data } = await supabase
             .from('images')
             .select('url')
@@ -90,8 +91,11 @@ function DarkroomContent() {
               document.head.appendChild(link);
             });
           }
+        }),
+        supabase.from('images').select('url').eq('category', 'ME').limit(1).then(({ data }) => {
+          if (data && data.length > 0) setMeImageUrl(data[0].url);
         })
-      );
+      ]);
     };
     const timer = setTimeout(preloadAllCategories, 1000);
     return () => clearTimeout(timer);
@@ -255,7 +259,7 @@ function DarkroomContent() {
       }
 
       let categoryData: any[] | null = null;
-      if (label !== "KONTAKT") {
+      if (label !== "KONTAKT" && label !== "ABOUT") {
         try {
           categoryData = categoryCacheRef.current[label] || null;
           if (!categoryData) {
@@ -289,7 +293,7 @@ function DarkroomContent() {
       setIsCategoryFading(true);
 
       let categoryData = categoryCacheRef.current[label];
-      if (!categoryData && label !== "KONTAKT") {
+      if (!categoryData && label !== "KONTAKT" && label !== "ABOUT") {
         try {
           const { data } = await supabase
             .from('images')
@@ -555,8 +559,8 @@ function DarkroomContent() {
         ) : (
           <div className="relative h-full w-full bg-black touch-none flex flex-col">
             {/* Oben Links: 'maltehugoluis' Schriftzug (Weiß, wird durch Canvas verdeckt und durch Kratzen aufgedeckt) */}
-            <div className={`absolute top-6 left-6 md:top-8 md:left-8 z-10 pointer-events-auto transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
-              <span className="font-mono text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-white hover:text-red-600 hover:[text-shadow:0_0_15px_rgba(220,38,38,0.8)] transition-all duration-300 select-none cursor-pointer">
+            <div className={`absolute top-6 left-6 md:top-8 md:left-8 z-[15] pointer-events-auto transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
+              <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); selectCategory("ABOUT"); }} className="font-mono text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-white hover:text-red-600 hover:[text-shadow:0_0_15px_rgba(220,38,38,0.8)] transition-all duration-300 select-none cursor-pointer outline-none pointer-events-auto inline-block">
                 maltehugoluis
               </span>
             </div>
@@ -565,7 +569,7 @@ function DarkroomContent() {
             <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 pointer-events-none transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
                 <button key={item.id} type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); selectCategory(item.label); }}
-                className="pointer-events-auto text-[clamp(2rem,min(10vw,8vh),6rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:scale-95 active:text-red-600 transition-all duration-300 uppercase select-none outline-none touch-manipulation">
+                className="pointer-events-auto text-[clamp(3rem,min(12vw,12vh),7rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:scale-95 active:text-red-600 transition-all duration-300 uppercase select-none outline-none touch-manipulation">
                   {item.label}
                 </button>
               ))}
@@ -582,11 +586,32 @@ function DarkroomContent() {
             />
           </div>
         )
+      ) : currentCategory === "ABOUT" ? (
+        <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center overflow-y-auto">
+          <div className="max-w-2xl w-full flex flex-col items-center gap-8 mt-12 md:mt-0">
+            {meImageUrl && (
+              <div className="w-32 h-40 md:w-48 md:h-64 border border-white/20 p-1 bg-white/5 shadow-2xl relative rotate-[-2deg]">
+                <img src={meImageUrl} alt="Malte" className="w-full h-full object-cover grayscale-[0.3] contrast-110" />
+              </div>
+            )}
+            <h1 className="text-[clamp(2rem,min(8vw,10vh),5rem)] font-black text-white uppercase tracking-tighter font-mono">
+              ÜBER MICH
+            </h1>
+            <div className="text-zinc-400 font-mono text-sm md:text-base leading-relaxed text-center space-y-4 max-w-xl">
+              <p>Hier kommt dein Text hin. Sag mir, was ich schreiben soll!</p>
+            </div>
+            
+            <button
+              onClick={() => { playClickSound(); setCurrentCategory(null); }}
+              className="mt-8 text-xs md:text-sm font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 border border-zinc-800 px-6 py-3 rounded hover:border-red-600/50"
+            >
+              ← ZURÜCK ZUM ARCHIV
+            </button>
+          </div>
+        </div>
       ) : currentCategory === "KONTAKT" ? (
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center">
-          <Link href="/about?from=kontakt" onClick={playClickSound} className="block cursor-pointer outline-none">
-            <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono">SAY HELLO</h1>
-          </Link>
+          <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono select-none">SAY HELLO</h1>
           <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
             <a href="mailto:breuermalte@icloud.com" onClick={playClickSound} 
               className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">breuermalte@icloud.com</a>
