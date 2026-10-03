@@ -39,10 +39,10 @@ export default function InquiriesForm({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div 
-        className="max-w-2xl w-full flex flex-col items-center gap-6 mt-20 mb-32 md:mb-0 md:mt-0 relative z-10 p-4 md:p-12 border border-white/10 bg-black/50 backdrop-blur-md"
+        className="max-w-xl w-full flex flex-col gap-12 mt-20 mb-32 md:mb-0 md:mt-0 relative z-10 p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter font-mono mb-4 text-center">
+        <h1 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter font-mono text-left">
           INQUIRIES
         </h1>
         
@@ -51,12 +51,16 @@ export default function InquiriesForm({ onClose }: { onClose: () => void }) {
             <motion.div 
               key="success"
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="text-center py-12 flex flex-col items-center gap-6"
+              className="py-24 flex flex-col items-start gap-8 text-left"
             >
-              <div className="w-16 h-16 rounded-full border border-red-600 flex items-center justify-center text-red-600 text-2xl">✓</div>
-              <p className="text-zinc-300 font-mono text-sm uppercase tracking-widest">Anfrage erfolgreich belichtet.</p>
-              <button onClick={onClose} className="mt-4 text-xs font-mono text-zinc-500 tracking-[0.2em] uppercase hover:text-red-600 transition-colors">
-                SCHLIESSEN
+              <div className="font-mono text-zinc-300 text-lg uppercase tracking-widest">
+                [ TRANSMISSION COMPLETE ]
+              </div>
+              <p className="text-zinc-500 font-mono text-sm uppercase tracking-widest">
+                We will get back to you shortly.
+              </p>
+              <button onClick={onClose} className="mt-8 font-mono text-zinc-500 hover:text-red-600 transition-colors uppercase tracking-[0.2em] text-xs">
+                ← RETURN
               </button>
             </motion.div>
           ) : (
@@ -64,59 +68,62 @@ export default function InquiriesForm({ onClose }: { onClose: () => void }) {
               key="form"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onSubmit={handleSubmit} 
-              className="w-full flex flex-col gap-4 font-mono text-xs md:text-sm text-left"
+              className="w-full flex flex-col gap-8 font-mono text-xs md:text-sm text-left"
             >
               <input type="checkbox" name="botcheck" className="hidden" style={{ display: 'none' }} />
 
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col md:flex-row gap-8">
                 <div className="flex-1 flex flex-col gap-2">
-                  <label className="text-zinc-500 tracking-widest uppercase">Name *</label>
-                  <input required type="text" name="name" className="bg-transparent border border-zinc-800 p-3 text-white focus:outline-none focus:border-red-600 transition-colors" />
+                  <input required type="text" name="name" placeholder="NAME *" className="bg-transparent border-b border-zinc-800 pb-3 text-white placeholder-zinc-700 focus:outline-none focus:border-red-600 transition-colors uppercase tracking-widest" />
                 </div>
                 <div className="flex-1 flex flex-col gap-2">
-                  <label className="text-zinc-500 tracking-widest uppercase">E-Mail *</label>
-                  <input required type="email" name="email" className="bg-transparent border border-zinc-800 p-3 text-white focus:outline-none focus:border-red-600 transition-colors" />
+                  <input required type="email" name="email" placeholder="E-MAIL *" className="bg-transparent border-b border-zinc-800 pb-3 text-white placeholder-zinc-700 focus:outline-none focus:border-red-600 transition-colors uppercase tracking-widest" />
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col md:flex-row gap-8">
                 <div className="flex-1 flex flex-col gap-2">
-                  <label className="text-zinc-500 tracking-widest uppercase">Projekt-Art *</label>
-                  <select required name="project_type" className="bg-black border border-zinc-800 p-3 text-white focus:outline-none focus:border-red-600 transition-colors appearance-none cursor-pointer">
-                    <option value="" disabled selected>Bitte wählen...</option>
-                    <option value="Event">Event</option>
-                    <option value="Portrait">Portrait</option>
-                    <option value="Landschaft/Street">Landschaft / Street</option>
-                    <option value="Andere">Andere</option>
+                  <select required name="project_type" className="bg-black border-b border-zinc-800 pb-3 text-white focus:outline-none focus:border-red-600 transition-colors appearance-none cursor-pointer uppercase tracking-widest rounded-none">
+                    <option value="" disabled selected className="text-zinc-700">TYPE OF PROJECT *</option>
+                    <option value="Event">EVENT</option>
+                    <option value="Portrait">PORTRAIT</option>
+                    <option value="Landschaft/Street">LANDSCAPE / STREET</option>
+                    <option value="Andere">OTHER</option>
                   </select>
                 </div>
                 <div className="flex-1 flex flex-col gap-2">
-                  <label className="text-zinc-500 tracking-widest uppercase">Datum / Zeitraum</label>
-                  <input type="text" name="date" placeholder="Optional" className="bg-transparent border border-zinc-800 p-3 text-white focus:outline-none focus:border-red-600 transition-colors" />
+                  <input type="text" name="date" placeholder="DATE / TIMEFRAME" className="bg-transparent border-b border-zinc-800 pb-3 text-white placeholder-zinc-700 focus:outline-none focus:border-red-600 transition-colors uppercase tracking-widest" />
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-zinc-500 tracking-widest uppercase">Ort / Location *</label>
-                <input required type="text" name="location" className="bg-transparent border border-zinc-800 p-3 text-white focus:outline-none focus:border-red-600 transition-colors" />
+                <input required type="text" name="location" placeholder="LOCATION *" className="bg-transparent border-b border-zinc-800 pb-3 text-white placeholder-zinc-700 focus:outline-none focus:border-red-600 transition-colors uppercase tracking-widest" />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-zinc-500 tracking-widest uppercase">Details / Nachricht *</label>
-                <textarea required name="message" rows={5} className="bg-transparent border border-zinc-800 p-3 text-white focus:outline-none focus:border-red-600 transition-colors resize-none"></textarea>
+              <div className="flex flex-col gap-2 mt-4">
+                <textarea required name="message" rows={4} placeholder="PROJECT DETAILS *" className="bg-transparent border-b border-zinc-800 pb-3 text-white placeholder-zinc-700 focus:outline-none focus:border-red-600 transition-colors resize-none uppercase tracking-widest"></textarea>
               </div>
 
               {formStatus === "error" && (
-                <p className="text-red-500 text-center mt-2 uppercase tracking-widest">Fehler beim Senden. Bitte später versuchen.</p>
+                <p className="text-red-600 mt-2 uppercase tracking-widest text-xs">[ SYSTEM ERROR: TRY AGAIN ]</p>
               )}
 
-              <button 
-                type="submit" 
-                disabled={formStatus === "submitting"}
-                className="mt-6 border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 p-4 tracking-[0.2em] uppercase font-bold disabled:opacity-50"
-              >
-                {formStatus === "submitting" ? "WIRD ENTWICKELT..." : "ANFRAGE ABSENDEN"}
-              </button>
+              <div className="flex justify-between items-center mt-8">
+                <button 
+                  type="button"
+                  onClick={onClose}
+                  className="font-mono text-zinc-600 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs"
+                >
+                  CANCEL
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={formStatus === "submitting"}
+                  className="font-mono text-red-600 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs disabled:opacity-50"
+                >
+                  {formStatus === "submitting" ? "[ TRANSMITTING... ]" : "[ SEND INQUIRY ]"}
+                </button>
+              </div>
             </motion.form>
           )}
         </AnimatePresence>
