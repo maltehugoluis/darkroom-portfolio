@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 
 const ChemistryTimer = dynamic(() => import('@/components/ChemistryTimer'), { ssr: false });
 const Lightbox = dynamic(() => import('@/components/Lightbox'), { ssr: false });
+const InquiriesForm = dynamic(() => import('@/components/InquiriesForm'), { ssr: false });
 
 const MENU = [
   { id: "events", label: "EVENTS" },
@@ -630,8 +631,8 @@ function DarkroomContent() {
         <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center">
           <h1 className="text-[clamp(3rem,min(10vw,15vh),6.75rem)] font-black mb-8 text-white uppercase italic tracking-tighter transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] font-mono select-none">SAY HELLO</h1>
           <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xs md:max-w-none mb-24 font-mono">
-            <a href="mailto:breuermalte@icloud.com" onClick={playClickSound} 
-              className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">breuermalte@icloud.com</a>
+            <button onClick={() => { playClickSound(); setCurrentCategory("INQUIRIES"); }} 
+              className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 outline-none cursor-pointer border-none bg-transparent">INQUIRIES</button>
             <a href="https://www.instagram.com/mhlportfolio" target="_blank" rel="noopener noreferrer" onClick={playClickSound} className="text-xs md:text-xl font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600">INSTAGRAM</a>
             <button
               type="button"
@@ -650,6 +651,8 @@ function DarkroomContent() {
             <p className="text-[11px] font-mono text-zinc-700 tracking-[0.3em] uppercase">© 2026 MALTE BREUER — ALL RIGHTS RESERVED</p>
           </div>
         </div>
+      ) : currentCategory === "INQUIRIES" ? (
+        <InquiriesForm onClose={() => { playClickSound(); setCurrentCategory(null); }} />
       ) : (
         <>
           <div ref={scrollContainerRef} onScroll={() => {
