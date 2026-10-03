@@ -594,7 +594,7 @@ function DarkroomContent() {
           onMouseLeave={() => setLeftZoneHovered(false)}
         >
           <div 
-            className="max-w-4xl w-full flex flex-col items-center gap-8 md:gap-12 mt-12 md:mt-0 relative z-10 cursor-auto md:cursor-none p-8 md:p-24"
+            className="max-w-4xl w-full flex flex-col items-center gap-8 md:gap-12 mt-12 mb-32 md:mb-0 md:mt-0 relative z-10 cursor-auto md:cursor-none p-8 md:p-24"
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={(e) => { e.stopPropagation(); setLeftZoneHovered(false); }}
             onMouseLeave={(e) => { e.stopPropagation(); setLeftZoneHovered(true); }}
