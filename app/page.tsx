@@ -620,10 +620,6 @@ function DarkroomContent() {
               <p className="text-xs md:text-sm">
                 Ein visuelles Archiv für die Ewigkeit.
               </p>
-
-              <p className="pt-4 tracking-[0.1em] text-xs uppercase hover:text-red-600 transition-colors cursor-default">
-                [ OPEN FOR PROJECTS & BOOKINGS ]
-              </p>
             </div>
           </div>
         </div>
