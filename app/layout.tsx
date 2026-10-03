@@ -34,6 +34,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
+      <head>
+        <link rel="preconnect" href="https://ivzuxvcjufvycnbloiez.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://ivzuxvcjufvycnbloiez.supabase.co" />
+      </head>
       <body className={inter.className}>
         {/* Der AudioProvider umschließt die Kinder und sorgt für den Sound-Loop */}
         <AudioProvider />

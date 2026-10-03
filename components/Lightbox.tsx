@@ -126,6 +126,9 @@ export default function Lightbox({ src, onClose, onPrev, onNext, imageData }: Li
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.2 }}
             src={src}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             className="max-h-full max-w-full object-contain shadow-2xl border border-zinc-900 rounded-xs"
             alt="Selected Work"
           />

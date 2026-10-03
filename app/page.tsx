@@ -68,28 +68,30 @@ function DarkroomContent() {
   const stateDepth = useRef(0);
   const categoryCacheRef = useRef<Record<string, any[]>>({});
 
-  // Hintergrund-Preload für alle Kategorien
+  // Parallel Hintergrund-Preload für alle Kategorien
   useEffect(() => {
     const preloadAllCategories = async () => {
       const targetCategories = MENU.filter(m => m.id !== "kontakt").map(m => m.label);
-      for (const cat of targetCategories) {
-        const { data } = await supabase
-          .from('images')
-          .select('url')
-          .eq('category', cat)
-          .order('prio', { ascending: true })
-          .limit(2);
+      await Promise.all(
+        targetCategories.map(async (cat) => {
+          const { data } = await supabase
+            .from('images')
+            .select('url')
+            .eq('category', cat)
+            .order('prio', { ascending: true })
+            .limit(2);
 
-        if (data) {
-          data.forEach(img => {
-            const link = document.createElement('link');
-            link.rel = 'preload';
-            link.as = 'image';
-            link.href = img.url;
-            document.head.appendChild(link);
-          });
-        }
-      }
+          if (data) {
+            data.forEach(img => {
+              const link = document.createElement('link');
+              link.rel = 'preload';
+              link.as = 'image';
+              link.href = img.url;
+              document.head.appendChild(link);
+            });
+          }
+        })
+      );
     };
     const timer = setTimeout(preloadAllCategories, 1000);
     return () => clearTimeout(timer);
@@ -120,9 +122,8 @@ function DarkroomContent() {
 
     const audio: HTMLAudioElement | null = (window as any).clickAudio;
     if (audio) {
-      const clone = audio.cloneNode() as HTMLAudioElement;
-      clone.volume = audio.volume;
-      clone.play().catch(() => {});
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
     }
   };
 
@@ -133,9 +134,8 @@ function DarkroomContent() {
 
     const audio: HTMLAudioElement | null = (window as any).autofocusAudio;
     if (audio) {
-      const clone = audio.cloneNode() as HTMLAudioElement;
-      clone.volume = audio.volume;
-      clone.play().catch(() => {});
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
     }
   };
 
@@ -261,7 +261,7 @@ function DarkroomContent() {
           if (!categoryData) {
             const { data } = await supabase
               .from('images')
-              .select('*')
+              .select('id, url, category, prio, created_at, location, camera_model, year')
               .eq('category', label)
               .order('prio', { ascending: true })
               .order('created_at', { ascending: false });
@@ -634,6 +634,7 @@ function DarkroomContent() {
                         src={img.url} 
                         alt={`Archive ${index}`}
                         decoding="async"
+                        loading={index < 2 ? "eager" : "lazy"}
                         fetchPriority={index === 0 ? "high" : "auto"}
                         onLoad={(e) => {
                           e.currentTarget.classList.remove('opacity-0', 'blur-[10px]');
