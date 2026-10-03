@@ -607,8 +607,16 @@ function DarkroomContent() {
             <h1 className="text-[clamp(2rem,min(8vw,10vh),5rem)] font-black text-white uppercase tracking-tighter font-mono transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] cursor-pointer">
               ÜBER MICH
             </h1>
-            <div className="text-zinc-400 font-mono text-sm md:text-base leading-relaxed text-center space-y-4 max-w-xl">
-              <p>Hier kommt dein Text hin. Sag mir, was ich schreiben soll!</p>
+            <div className="text-zinc-400 font-mono text-sm md:text-base leading-relaxed text-center space-y-6 max-w-xl">
+              <p>
+                Ich bin Malte Breuer, Fotograf aus Biberach. Seit drei Jahren bewege ich mich voll digital hinter der Kamera.
+              </p>
+              <p className="text-zinc-200 italic tracking-wide">
+                "Ich halte Momente so fest, wie sie gefühlt werden – und bewahre sie für die Ewigkeit."
+              </p>
+              <p>
+                Egal ob Events, ausdrucksstarke Portraits, Landschaften oder Street Photography: Ich bin stets offen für neue kreative Herausforderungen und buchbar für Projekte aller Art.
+              </p>
             </div>
           </div>
         </div>
