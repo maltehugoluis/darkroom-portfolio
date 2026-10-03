@@ -6,13 +6,13 @@ import AudioProvider from "../components/AudioProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Malte Breuer | Visuals & Photography",
-  description: "Das digitale Darkroom-Portfolio von Malte Breuer. Entdecke analoge und digitale Arbeiten aus den Bereichen Events, Landschaft, Street und Personen in Biberach an der Riss.",
-  keywords: ["Malte Breuer", "Fotografie", "Portfolio", "Darkroom", "Street Photography", "Events", "Biberach", "Deutschland", "Biberach an der Riss"],
+  title: "Malte Breuer | Fotografie Biberach",
+  description: "Das digitale Darkroom-Portfolio von Malte Breuer. Entdecke Arbeiten aus den Bereichen Events, Landschaft, Street und Personen in Biberach an der Riss.",
+  keywords: ["Malte Breuer", "Fotografie", "Portfolio", "Darkroom", "Street Photography", "Events", "Biberach", "Deutschland", "Biberach an der Riss", "Hochzeit", "Hochzeitsfotografie", "Portraits", "Festivals", "Concert", "Comercial", "Corporate"],
   authors: [{ name: "Malte Breuer" }],
   
   openGraph: {
-    title: "Malte Breuer | Visuals & Photography",
+    title: "Malte Breuer | Fotografie Biberach",
     description: "Das digitale Darkroom-Portfolio von Malte Breuer.",
     url: "https://mhlportfolio.xyz",
     siteName: "Malte Breuer Portfolio",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   
   twitter: {
     card: "summary_large_image",
-    title: "Malte Breuer | Visuals",
+    title: "Malte Breuer | Fotografie Biberach",
     description: "Das digitale Darkroom-Portfolio von Malte Breuer.",
   },
 };
