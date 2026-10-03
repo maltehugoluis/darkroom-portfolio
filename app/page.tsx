@@ -554,6 +554,13 @@ function DarkroomContent() {
           <div className="h-screen w-screen bg-black" />
         ) : (
           <div className="relative h-full w-full bg-black touch-none flex flex-col">
+            {/* Oben Links: Diskreter 'maltehugoluis' Schriftzug (Schwarz im Ruhezustand, Rot beim Hover) */}
+            <div className="absolute top-6 left-6 md:top-8 md:left-8 z-[50] pointer-events-auto">
+              <span className="font-mono text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-black hover:text-red-600 hover:[text-shadow:0_0_15px_rgba(220,38,38,0.8)] transition-all duration-500 select-none cursor-pointer">
+                maltehugoluis
+              </span>
+            </div>
+
             {/* Menü-Container: Exakt zentriert über den gesamten Bildschirm ohne störendes Padding */}
             <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 pointer-events-none transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
