@@ -54,10 +54,10 @@ export default function InquiriesForm({ onClose }: { onClose: () => void }) {
               className="py-24 flex flex-col items-start gap-8 text-left"
             >
               <div className="font-mono text-zinc-300 text-lg uppercase tracking-widest">
-                [ TRANSMISSION COMPLETE ]
+                [ INQUIRY SENT ]
               </div>
               <p className="text-zinc-500 font-mono text-sm uppercase tracking-widest">
-                We will get back to you shortly.
+                Thank you. I will get back to you shortly.
               </p>
               <button onClick={onClose} className="mt-8 font-mono text-zinc-500 hover:text-red-600 transition-colors uppercase tracking-[0.2em] text-xs">
                 ← RETURN
