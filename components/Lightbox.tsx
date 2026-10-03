@@ -17,13 +17,44 @@ interface LightboxProps {
 export default function Lightbox({ src, onClose, onPrev, onNext, imageData }: LightboxProps) {
   const [isHoveringBackground, setIsHoveringBackground] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setTouchStartX(e.touches[0].clientX);
+      setTouchStartY(e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null || e.changedTouches.length === 0) return;
+    const diffX = touchStartX - e.changedTouches[0].clientX;
+    const diffY = touchStartY - e.changedTouches[0].clientY;
+
+    // Horizontales Wischen (mindestens 40px) -> Nächstes / Vorheriges Bild
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+      if (diffX > 0) {
+        onNext?.();
+      } else {
+        onPrev?.();
+      }
+    } 
+    // Vertikales Wischen nach unten (mindestens 60px) -> Schließen
+    else if (diffY < -60 && Math.abs(diffY) > Math.abs(diffX)) {
+      onClose();
+    }
+
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
 
   // Keyboard navigation for Arrow Left / Arrow Right / Escape
   useEffect(() => {
@@ -50,9 +81,11 @@ export default function Lightbox({ src, onClose, onPrev, onNext, imageData }: Li
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       onMouseEnter={() => setIsHoveringBackground(true)}
       onMouseLeave={() => setIsHoveringBackground(false)}
-      className="fixed inset-0 z-[500] bg-black/95 flex items-center justify-center p-6 md:p-12 md:cursor-none"
+      className="fixed inset-0 z-[500] bg-black/95 flex items-center justify-center p-6 md:p-12 md:cursor-none touch-none select-none"
     >
       {isHoveringBackground && !isMobile && (
         <style>{`.custom-cursor { opacity: 0 !important; }`}</style>

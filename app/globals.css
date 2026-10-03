@@ -63,6 +63,15 @@ body {
   .touch-none {
     touch-action: none;
   }
+
+  /* Entfernt das blaue/graue Touch-Aufblitzen auf mobilen Browsern */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
 }
 
 /* 5. UTILITIES & MASONRY FIXES */

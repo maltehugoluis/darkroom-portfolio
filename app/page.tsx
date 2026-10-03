@@ -440,7 +440,7 @@ function DarkroomContent() {
       if (e.touches[0]) updatePosition(e.touches[0].clientX, e.touches[0].clientY);
     };
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false }); 
+    window.addEventListener('touchmove', handleTouchMove, { passive: currentCategory ? true : false }); 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
@@ -520,7 +520,7 @@ function DarkroomContent() {
   }, [currentCategory, isMobile, uniquePrios.length, images]);
 
   return (
-    <main className="h-screen w-screen bg-black overflow-hidden relative selection:bg-red-600 selection:text-white">
+    <main className="h-[100dvh] w-screen bg-black overflow-hidden relative selection:bg-red-600 selection:text-white">
       <AnimatePresence>
         {loading && <ChemistryTimer onComplete={() => {}} />}
       </AnimatePresence>
@@ -558,7 +558,7 @@ function DarkroomContent() {
             <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center gap-[min(3vh,1.5rem)] px-4 pointer-events-none transition-opacity duration-500 ${canvasReady ? 'opacity-100' : 'opacity-0'}`}>
               {MENU.map((item) => (
                 <button key={item.id} type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); selectCategory(item.label); }}
-                className="pointer-events-auto text-[clamp(2rem,min(10vw,8vh),6rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:text-red-600 transition-all duration-500 uppercase select-none outline-none">
+                className="pointer-events-auto text-[clamp(2rem,min(10vw,8vh),6rem)] font-black text-white tracking-tighter leading-none hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] active:scale-95 active:text-red-600 transition-all duration-300 uppercase select-none outline-none touch-manipulation">
                   {item.label}
                 </button>
               ))}
@@ -634,6 +634,7 @@ function DarkroomContent() {
                         src={img.url} 
                         alt={`Archive ${index}`}
                         decoding="async"
+                        sizes="(max-width: 768px) 85vw, 60vh"
                         loading={index < 2 ? "eager" : "lazy"}
                         fetchPriority={index === 0 ? "high" : "auto"}
                         onLoad={(e) => {
