@@ -587,26 +587,29 @@ function DarkroomContent() {
           </div>
         )
       ) : currentCategory === "ABOUT" ? (
-        <div className="p-4 md:p-16 h-full flex flex-col justify-center items-center relative bg-black text-center overflow-y-auto">
-          <div className="max-w-2xl w-full flex flex-col items-center gap-8 mt-12 md:mt-0">
+        <div 
+          className="p-4 md:p-16 h-full w-full flex flex-col justify-center items-center absolute inset-0 bg-black text-center overflow-y-auto cursor-none md:cursor-none"
+          onClick={() => { playClickSound(); setCurrentCategory(null); }}
+          onMouseEnter={() => setLeftZoneHovered(true)}
+          onMouseLeave={() => setLeftZoneHovered(false)}
+        >
+          <div 
+            className="max-w-2xl w-full flex flex-col items-center gap-8 mt-12 md:mt-0 relative z-10 cursor-auto md:cursor-none"
+            onClick={(e) => e.stopPropagation()}
+            onMouseEnter={(e) => { e.stopPropagation(); setLeftZoneHovered(false); }}
+            onMouseLeave={(e) => { e.stopPropagation(); setLeftZoneHovered(true); }}
+          >
             {meImageUrl && (
               <div className="w-32 h-40 md:w-48 md:h-64 border border-white/20 p-1 bg-white/5 shadow-2xl relative rotate-[-2deg]">
                 <img src={meImageUrl} alt="Malte" className="w-full h-full object-cover grayscale-[0.3] contrast-110" />
               </div>
             )}
-            <h1 className="text-[clamp(2rem,min(8vw,10vh),5rem)] font-black text-white uppercase tracking-tighter font-mono">
+            <h1 className="text-[clamp(2rem,min(8vw,10vh),5rem)] font-black text-white uppercase tracking-tighter font-mono transition-all duration-500 hover:text-red-600 hover:[text-shadow:0_0_30px_rgba(220,38,38,0.8)] cursor-pointer">
               ÜBER MICH
             </h1>
             <div className="text-zinc-400 font-mono text-sm md:text-base leading-relaxed text-center space-y-4 max-w-xl">
               <p>Hier kommt dein Text hin. Sag mir, was ich schreiben soll!</p>
             </div>
-            
-            <button
-              onClick={() => { playClickSound(); setCurrentCategory(null); }}
-              className="mt-8 text-xs md:text-sm font-mono text-zinc-500 tracking-[0.2em] uppercase transition-all duration-300 hover:text-red-600 border border-zinc-800 px-6 py-3 rounded hover:border-red-600/50"
-            >
-              ← ZURÜCK ZUM ARCHIV
-            </button>
           </div>
         </div>
       ) : currentCategory === "KONTAKT" ? (
