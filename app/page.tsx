@@ -594,13 +594,13 @@ function DarkroomContent() {
           onMouseLeave={() => setLeftZoneHovered(false)}
         >
           <div 
-            className="max-w-2xl w-full flex flex-col items-center gap-8 mt-12 md:mt-0 relative z-10 cursor-auto md:cursor-none"
+            className="max-w-4xl w-full flex flex-col items-center gap-8 md:gap-12 mt-12 md:mt-0 relative z-10 cursor-auto md:cursor-none p-8 md:p-24"
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={(e) => { e.stopPropagation(); setLeftZoneHovered(false); }}
             onMouseLeave={(e) => { e.stopPropagation(); setLeftZoneHovered(true); }}
           >
             {meImageUrl && (
-              <div className="w-32 h-40 md:w-48 md:h-64 border border-white/20 p-1 bg-white/5 shadow-2xl relative rotate-[-2deg]">
+              <div className="w-48 h-64 md:w-72 md:h-96 border border-white/20 p-1 bg-white/5 shadow-2xl relative rotate-[-2deg] mb-4">
                 <img src={meImageUrl} alt="Malte" className="w-full h-full object-cover grayscale-[0.3] contrast-110" />
               </div>
             )}
