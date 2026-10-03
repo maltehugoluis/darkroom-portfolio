@@ -14,7 +14,8 @@ const MENU = [
   { id: "events", label: "EVENTS" },
   { id: "landschaft", label: "LANDSCHAFT" },
   { id: "street", label: "STREET" },
-  { id: "personen", label: "PERSONEN" },
+  { id: "festivals", label: "FESTIVALS" },
+  { id: "hochzeiten", label: "HOCHZEITEN" },
   { id: "kontakt", label: "KONTAKT" }
 ];
 

@@ -9,7 +9,8 @@ const CATEGORIES = [
   { id: "EVENTS", label: "EVENTS" },
   { id: "LANDSCHAFT", label: "LANDSCHAFT" },
   { id: "STREET", label: "STREET" },
-  { id: "PERSONEN", label: "PERSONEN" },
+  { id: "FESTIVALS", label: "FESTIVALS" },
+  { id: "HOCHZEITEN", label: "HOCHZEITEN" },
   { id: "ME", label: "ME / ABOUT" },
 ];
 
